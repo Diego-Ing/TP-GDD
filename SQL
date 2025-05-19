@@ -1,0 +1,555 @@
+-- PROVINCIA
+CREATE TABLE Provincia (
+    provincia_codigo INT IDENTITY(1,1),
+    provincia_nombre NVARCHAR(50)
+);
+
+-- LOCALIDAD
+CREATE TABLE Localidad (
+    localidad_codigo INT IDENTITY(1,1) PRIMARY KEY,
+    localidad_nombre NVARCHAR(50) NOT NULL,
+    provincia_localidad INT FOREIGN KEY REFERENCES Provincia(provincia_codigo)
+);
+
+-- DIRECCION
+CREATE TABLE Direccion (
+    direccion_codigo INT IDENTITY(1,1) PRIMARY KEY,
+    direccion_nombre NVARCHAR(50) NOT NULL,
+    direccion_localidad INT FOREIGN KEY REFERENCES Localidad(localidad_codigo)
+);
+
+-- CLIENTE
+CREATE TABLE Cliente (
+    cliente_codigo BIGINT PRIMARY KEY, -- Usamos el DNI como PK
+    cliente_direccion INT FOREIGN KEY REFERENCES Direccion(direccion_codigo),
+    cliente_telefono VARCHAR(20),
+    cliente_dni BIGINT,
+    cliente_nombre NVARCHAR(50),
+    cliente_apellido NVARCHAR(50),
+    cliente_nacimiento SMALLDATETIME,
+    cliente_mail NVARCHAR(50)
+);
+
+-- SUCURSAL
+CREATE TABLE Sucursal (
+    sucursal_codigo INT PRIMARY KEY,
+    sucursal_direccion INT FOREIGN KEY REFERENCES Direccion(direccion_codigo),
+    sucursal_mall NVARCHAR(50)
+);
+
+-- ESTADO_PEDIDO
+CREATE TABLE EstadoPedido (
+    estado_id INT IDENTITY(1,1) PRIMARY KEY,
+    estado_nombre VARCHAR(20) UNIQUE NOT NULL
+);
+
+-- MODELO
+CREATE TABLE Modelo (
+    modelo_codigo CHAR(2) PRIMARY KEY,
+    modelo_description VARCHAR(100),
+    modelo_precio_base DECIMAL(12,2)
+);
+
+-- MEDIDA
+CREATE TABLE Medida (
+    medida_codigo INT IDENTITY(1,1) PRIMARY KEY,
+    medida_alto DECIMAL(12,2),
+    medida_ancho DECIMAL(12,2),
+    medida_profundidad DECIMAL(12,2),
+    medida_precio DECIMAL(12,2)
+);
+
+-- TIPO MATERIAL
+CREATE TABLE TipoMaterial (
+    tipo_material_id INT IDENTITY(1,1) PRIMARY KEY,
+    tipo_material_nombre NVARCHAR(20)
+);
+
+-- MATERIAL
+CREATE TABLE Material (
+    material_codigo INT IDENTITY(1,1) PRIMARY KEY,
+    material_tipo INT FOREIGN KEY REFERENCES TipoMaterial(tipo_material_id)
+);
+
+-- TELA
+CREATE TABLE Tela (
+    tela_codigo INT IDENTITY(1,1) PRIMARY KEY,
+    tela_material INT FOREIGN KEY REFERENCES Material(material_codigo),
+    tela_precio DECIMAL(12,2),
+    tela_color NVARCHAR(10),
+    tela_textura NVARCHAR(10)
+);
+
+-- MADERA
+CREATE TABLE Madera (
+    madera_codigo INT IDENTITY(1,1) PRIMARY KEY,
+    madera_material INT FOREIGN KEY REFERENCES Material(material_codigo),
+    madera_precio DECIMAL(12,2),
+    madera_color NVARCHAR(10),
+    madera_dureza NVARCHAR(10)
+);
+
+-- RELLENO
+CREATE TABLE Relleno (
+    relleno_codigo INT IDENTITY(1,1) PRIMARY KEY,
+    relleno_material INT FOREIGN KEY REFERENCES Material(material_codigo),
+    relleno_densidad CHAR(1),
+    relleno_precio DECIMAL(12,2)
+);
+
+-- SILLON
+CREATE TABLE Sillon (
+    sillon_codigo CHAR(10) PRIMARY KEY,
+    sillon_modelo CHAR(2) FOREIGN KEY REFERENCES Modelo(modelo_codigo),
+    sillon_medidas INT FOREIGN KEY REFERENCES Medida(medida_codigo),
+    sillon_materiales INT FOREIGN KEY REFERENCES Material(material_codigo)
+);
+
+-- PEDIDO
+CREATE TABLE Pedido (
+    pedido_codigo INT PRIMARY KEY,
+    pedido_sucursal INT FOREIGN KEY REFERENCES Sucursal(sucursal_codigo),
+    pedido_cliente BIGINT FOREIGN KEY REFERENCES Cliente(cliente_codigo),
+    pedido_fecha SMALLDATETIME,
+    pedido_total DECIMAL(12,2),
+    pedido_estado INT FOREIGN KEY REFERENCES EstadoPedido(estado_id)
+);
+
+-- ITEM_PEDIDO
+CREATE TABLE ItemPedido (
+    item_pedido INT,
+    item_sillon CHAR(10),
+    item_cantidad INT,
+    item_precio DECIMAL(12,2),
+    item_subtotal DECIMAL(12,2),
+    PRIMARY KEY (item_pedido, item_sillon),
+    FOREIGN KEY (item_pedido) REFERENCES Pedido(pedido_codigo),
+    FOREIGN KEY (item_sillon) REFERENCES Sillon(sillon_codigo)
+);
+
+-- FACTURA
+CREATE TABLE Factura (
+    factura_codigo INT PRIMARY KEY,
+    fact_pedido INT FOREIGN KEY REFERENCES Pedido(pedido_codigo),
+    fact_fecha SMALLDATETIME,
+    fact_total DECIMAL(12,2),
+    fact_sucursal INT FOREIGN KEY REFERENCES Sucursal(sucursal_codigo),
+    fact_cliente BIGINT FOREIGN KEY REFERENCES Cliente(cliente_codigo)
+);
+
+-- ITEM_FACTURA
+CREATE TABLE ItemFactura (
+    item_fact_codigo INT,
+    item_fact_pedido INT,
+    item_fact_sillon CHAR(10),
+    item_fact_precio DECIMAL(12,2),
+    item_fact_cantidad INT,
+    item_fact_subtotal DECIMAL(12,2),
+    PRIMARY KEY (item_fact_codigo, item_fact_pedido, item_fact_sillon),
+    FOREIGN KEY (item_fact_pedido, item_fact_sillon) REFERENCES ItemPedido(item_pedido, item_sillon),
+    FOREIGN KEY (item_fact_codigo) REFERENCES Factura(factura_codigo)
+);
+
+-- ENVIO
+CREATE TABLE Envio (
+    envio_codigo INT PRIMARY KEY,
+    envio_factura INT FOREIGN KEY REFERENCES Factura(factura_codigo),
+    envio_techa_programada SMALLDATETIME,
+    envio_techa_entrega SMALLDATETIME,
+    envio_importe_trasiado DECIMAL(12,2),
+    envio_importe_subida DECIMAL(12,2),
+    envio_total DECIMAL(12,2)
+);
+
+-- PROVEEDOR
+CREATE TABLE Proveedor (
+    proveedor_codigo INT IDENTITY(1,1) PRIMARY KEY,
+    proveedor_direccion INT FOREIGN KEY REFERENCES Direccion(direccion_codigo),
+    proveedor_razon_social NVARCHAR(50),
+    proveedor_telefono VARCHAR(20),
+    proveedor_mail NVARCHAR(50)
+);
+
+-- COMPRA
+CREATE TABLE Compra (
+    comp_codigo INT PRIMARY KEY,
+    comp_sucursal INT FOREIGN KEY REFERENCES Sucursal(sucursal_codigo),
+    comp_proveedor INT FOREIGN KEY REFERENCES Proveedor(proveedor_codigo),
+    comp_fecha SMALLDATETIME,
+    comp_material INT FOREIGN KEY REFERENCES Material(material_codigo),
+    comp_total DECIMAL(12,2)
+);
+
+-- ITEM_COMPRA
+CREATE TABLE ItemCompra (
+    item_compra INT,
+    item_material INT,
+    item_cantidad DECIMAL(12,2),
+    item_precio_unitario DECIMAL(12,2),
+    item_subtotal DECIMAL(12,2),
+    FOREIGN KEY (item_compra) REFERENCES Compra(comp_codigo),
+    FOREIGN KEY (item_material) REFERENCES Material(material_codigo),
+    PRIMARY KEY (item_compra, item_material)
+);
+
+-- MERGEO DE TABLAS -- 
+
+-- Cliente_Provincia
+MERGE Provincia AS target
+USING (SELECT DISTINCT Cliente_Provincia AS provincia_nombre FROM gd_esquema.Maestra) AS source
+ON target.provincia_nombre = source.provincia_nombre
+WHEN NOT MATCHED THEN INSERT (provincia_nombre) VALUES (source.provincia_nombre);
+
+-- Sucursal_Provincia
+MERGE Provincia AS target
+USING (SELECT DISTINCT Sucursal_Provincia FROM gd_esquema.Maestra) AS source
+ON target.provincia_nombre = source.Sucursal_Provincia
+WHEN NOT MATCHED THEN INSERT (provincia_nombre) VALUES (source.Sucursal_Provincia);
+
+-- Proveedor_Provincia
+MERGE Provincia AS target
+USING (SELECT DISTINCT Proveedor_Provincia FROM gd_esquema.Maestra) AS source
+ON target.provincia_nombre = source.Proveedor_Provincia
+WHEN NOT MATCHED THEN INSERT (provincia_nombre) VALUES (source.Proveedor_Provincia);
+
+-- Cliente_Localidad
+MERGE Localidad AS target
+USING (
+  SELECT DISTINCT
+    Cliente_Localidad AS localidad_nombre,
+    (SELECT provincia_codigo FROM Provincia WHERE provincia_nombre = Cliente_Provincia) AS provincia_localidad
+  FROM gd_esquema.Maestra
+) AS source
+ON target.localidad_nombre = source.localidad_nombre AND target.provincia_localidad = source.provincia_localidad
+WHEN NOT MATCHED THEN INSERT (localidad_nombre, provincia_localidad) VALUES (source.localidad_nombre, source.provincia_localidad);
+
+-- Sucursal_Localidad
+MERGE Localidad AS target
+USING (
+  SELECT DISTINCT
+    Sucursal_Localidad,
+    (SELECT provincia_codigo FROM Provincia WHERE provincia_nombre = Sucursal_Provincia)
+  FROM gd_esquema.Maestra
+) AS source(localidad_nombre, provincia_localidad)
+ON target.localidad_nombre = source.localidad_nombre AND target.provincia_localidad = source.provincia_localidad
+WHEN NOT MATCHED THEN INSERT (localidad_nombre, provincia_localidad) VALUES (source.localidad_nombre, source.provincia_localidad);
+
+-- Proveedor_Localidad
+MERGE Localidad AS target
+USING (
+  SELECT DISTINCT
+    Proveedor_Localidad,
+    (SELECT provincia_codigo FROM Provincia WHERE provincia_nombre = Proveedor_Provincia)
+  FROM gd_esquema.Maestra
+) AS source(localidad_nombre, provincia_localidad)
+ON target.localidad_nombre = source.localidad_nombre AND target.provincia_localidad = source.provincia_localidad
+WHEN NOT MATCHED THEN INSERT (localidad_nombre, provincia_localidad) VALUES (source.localidad_nombre, source.provincia_localidad);
+
+
+-- Cliente_Direccion
+MERGE Direccion AS target
+USING (
+  SELECT DISTINCT
+    Cliente_Direccion AS direccion_nombre,
+    (SELECT localidad_codigo FROM Localidad WHERE localidad_nombre = Cliente_Localidad) AS direccion_localidad
+  FROM gd_esquema.Maestra
+) AS source
+ON target.direccion_nombre = source.direccion_nombre AND target.direccion_localidad = source.direccion_localidad
+WHEN NOT MATCHED THEN INSERT (direccion_nombre, direccion_localidad) VALUES (source.direccion_nombre, source.direccion_localidad);
+
+-- Sucursal_Direccion
+MERGE Direccion AS target
+USING (
+  SELECT DISTINCT
+    Sucursal_Direccion,
+    (SELECT localidad_codigo FROM Localidad WHERE localidad_nombre = Sucursal_Localidad)
+  FROM gd_esquema.Maestra
+) AS source(direccion_nombre, direccion_localidad)
+ON target.direccion_nombre = source.direccion_nombre AND target.direccion_localidad = source.direccion_localidad
+WHEN NOT MATCHED THEN INSERT (direccion_nombre, direccion_localidad) VALUES (source.direccion_nombre, source.direccion_localidad);
+
+-- Proveedor_Direccion
+MERGE Direccion AS target
+USING (
+  SELECT DISTINCT
+    Proveedor_Direccion,
+    (SELECT localidad_codigo FROM Localidad WHERE localidad_nombre = Proveedor_Localidad)
+  FROM gd_esquema.Maestra
+) AS source(direccion_nombre, direccion_localidad)
+ON target.direccion_nombre = source.direccion_nombre AND target.direccion_localidad = source.direccion_localidad
+WHEN NOT MATCHED THEN INSERT (direccion_nombre, direccion_localidad) VALUES (source.direccion_nombre, source.direccion_localidad);
+
+MERGE Cliente AS target
+USING (
+  SELECT DISTINCT
+    Cliente_Dni AS cliente_codigo,
+    (SELECT direccion_codigo FROM Direccion WHERE direccion_nombre = Cliente_Direccion) AS cliente_direccion,
+    Cliente_Telefono,
+    Cliente_Dni,
+    Cliente_Nombre,
+    Cliente_Apellido,
+    Cliente_FechaNacimiento,
+    Cliente_Mail
+  FROM gd_esquema.Maestra
+) AS source
+ON target.cliente_codigo = source.cliente_codigo
+WHEN NOT MATCHED THEN
+  INSERT (cliente_codigo, cliente_direccion, cliente_telefono, cliente_dni, cliente_nombre, cliente_apellido, cliente_nacimiento, cliente_mail)
+  VALUES (source.cliente_codigo, source.cliente_direccion, source.Cliente_Telefono, source.Cliente_Dni, source.Cliente_Nombre, source.Cliente_Apellido, source.Cliente_FechaNacimiento, source.Cliente_Mail);
+
+MERGE Sucursal AS target
+USING (
+  SELECT DISTINCT
+    Sucursal_NroSucursal AS sucursal_codigo,
+    (SELECT direccion_codigo FROM Direccion WHERE direccion_nombre = Sucursal_Direccion) AS sucursal_direccion,
+    Sucursal_Localidad AS sucursal_mall
+  FROM gd_esquema.Maestra
+) AS source
+ON target.sucursal_codigo = source.sucursal_codigo
+WHEN NOT MATCHED THEN
+  INSERT (sucursal_codigo, sucursal_direccion, sucursal_mall)
+  VALUES (source.sucursal_codigo, source.sucursal_direccion, source.sucursal_mall);
+
+
+MERGE EstadoPedido AS target
+USING (
+  SELECT DISTINCT Pedido_Estado AS estado_nombre FROM gd_esquema.Maestra
+) AS source
+ON target.estado_nombre = source.estado_nombre
+WHEN NOT MATCHED THEN INSERT (estado_nombre) VALUES (source.estado_nombre);
+
+MERGE Modelo AS target
+USING (
+  SELECT DISTINCT
+    Sillon_Modelo_Codigo AS modelo_codigo,
+    Sillon_Modelo_Descripcion AS modelo_description
+  FROM gd_esquema.Maestra
+) AS source
+ON target.modelo_codigo = source.modelo_codigo
+WHEN NOT MATCHED THEN
+  INSERT (modelo_codigo, modelo_description)
+  VALUES (source.modelo_codigo, source.modelo_description);
+
+
+MERGE Medida AS target
+USING (
+  SELECT DISTINCT
+    Sillon_Medida_Alto,
+    Sillon_Medida_Ancho,
+    Sillon_Medida_Profundidad AS medida_precio
+  FROM gd_esquema.Maestra
+) AS source
+ON target.medida_alto = source.Sillon_Medida_Alto
+   AND target.medida_ancho = source.Sillon_Medida_Ancho
+WHEN NOT MATCHED THEN
+  INSERT (medida_alto, medida_ancho, medida_profundidad, medida_precio)
+  VALUES (source.Sillon_Medida_Alto, source.Sillon_Medida_Ancho, source.medida_precio);
+
+
+MERGE Sillon AS target
+USING (
+  SELECT DISTINCT
+    Sillon_Codigo AS sillon_codigo,
+    Sillon_Modelo_Codigo AS sillon_modelo
+    -- sillon_medidas y sillon_materiales deben resolverse desde Medida y Material con JOINs si fuera necesario
+  FROM gd_esquema.Maestra
+) AS source
+ON target.sillon_codigo = source.sillon_codigo
+WHEN NOT MATCHED THEN INSERT (sillon_codigo, sillon_modelo)
+VALUES (source.sillon_codigo, source.sillon_modelo);
+
+MERGE Pedido AS target
+USING (
+  SELECT DISTINCT
+    Pedido_Numero AS pedido_codigo,
+    Sucursal_NroSucursal AS pedido_sucursal,
+    Cliente_Dni AS pedido_cliente,
+    Pedido_Fecha,
+    Pedido_Total,
+    (SELECT estado_id FROM EstadoPedido WHERE estado_nombre = Pedido_Estado) AS pedido_estado
+  FROM gd_esquema.Maestra
+) AS source
+ON target.pedido_codigo = source.pedido_codigo
+WHEN NOT MATCHED THEN INSERT (pedido_codigo, pedido_sucursal, pedido_cliente, pedido_fecha, pedido_total, pedido_estado)
+VALUES (source.pedido_codigo, source.pedido_sucursal, source.pedido_cliente, source.Pedido_Fecha, source.Pedido_Total, source.pedido_estado);
+
+MERGE ItemPedido AS target
+USING (
+  SELECT DISTINCT
+    Pedido_Numero AS Item_pedido,
+    Sillon_Codigo AS Item_sillon,
+    Detalle_Pedido_Cantidad AS item_cantidad,
+    Detalle_Pedido_Precio AS item_precio,
+    Detalle_Pedido_SubTotal AS item_subtotal
+  FROM gd_esquema.Maestra
+) AS source
+ON target.Item_pedido = source.Item_pedido AND target.Item_sillon = source.Item_sillon
+WHEN NOT MATCHED THEN INSERT (Item_pedido, Item_sillon, item_cantidad, item_precio, item_subtotal)
+VALUES (source.Item_pedido, source.Item_sillon, source.item_cantidad, source.item_precio, source.item_subtotal);
+
+-- FACTURA
+MERGE Factura AS target
+USING (
+  SELECT DISTINCT
+    Factura_Numero AS factura_codigo,
+    Pedido_Numero AS fact_pedido,
+    Factura_Fecha AS fact_fecha,
+    Factura_Total AS fact_total,
+    Sucursal_NroSucursal AS fact_sucursal,
+    Cliente_Dni AS fact_cliente
+  FROM gd_esquema.Maestra
+) AS source
+ON target.factura_codigo = source.factura_codigo
+WHEN NOT MATCHED THEN
+  INSERT (factura_codigo, fact_pedido, fact_fecha, fact_total, fact_sucursal, fact_cliente)
+  VALUES (source.factura_codigo, source.fact_pedido, source.fact_fecha, source.fact_total, source.fact_sucursal, source.fact_cliente);
+
+-- ITEM FACTURA
+MERGE ItemFactura AS target
+USING (
+  SELECT DISTINCT
+    Factura_Numero AS item_fact_codigo,
+    Pedido_Numero AS item_fact_pedido,
+    Sillon_Codigo AS item_fact_sillon,
+    Detalle_Factura_Precio AS item_fact_precio,
+    Detalle_Factura_Cantidad AS item_fact_cantidad,
+    Detalle_Factura_SubTotal AS item_fact_subtotal
+  FROM gd_esquema.Maestra
+) AS source
+ON target.item_fact_codigo = source.item_fact_codigo
+   AND target.item_fact_pedido = source.item_fact_pedido
+   AND target.item_fact_sillon = source.item_fact_sillon
+WHEN NOT MATCHED THEN
+  INSERT (item_fact_codigo, item_fact_pedido, item_fact_sillon, item_fact_precio, item_fact_cantidad, item_fact_subtotal)
+  VALUES (source.item_fact_codigo, source.item_fact_pedido, source.item_fact_sillon, source.item_fact_precio, source.item_fact_cantidad, source.item_fact_subtotal);
+
+MERGE Envio AS target
+USING (
+  SELECT DISTINCT
+    Envio_Numero AS envio_codigo,
+    Factura_Numero AS envio_factura,
+    NULL AS envio_fecha_programada, -- No disponible en maestra
+    NULL AS envio_fecha_entrega,    -- No disponible en maestra
+    Envio_ImporteTraslado AS envio_importe_trasiado,
+    Envio_ImporteSubida AS envio_importe_subida,
+    Envio_Total AS envio_total
+  FROM gd_esquema.Maestra
+) AS source
+ON target.envio_codigo = source.envio_codigo
+WHEN NOT MATCHED THEN
+  INSERT (envio_codigo, envio_factura, envio_techa_programada, envio_techa_entrega, envio_importe_trasiado, envio_importe_subida, envio_total)
+  VALUES (source.envio_codigo, source.envio_factura, source.envio_fecha_programada, source.envio_fecha_entrega, source.envio_importe_trasiado, source.envio_importe_subida, source.envio_total);
+
+
+-- PROVEEDOR
+MERGE Proveedor AS target
+USING (
+  SELECT DISTINCT
+    Proveedor_Cuit AS proveedor_codigo,
+    (SELECT direccion_codigo FROM Direccion WHERE direccion_nombre = Proveedor_Direccion) AS proveedor_direccion,
+    Proveedor_RazonSocial,
+    Proveedor_Telefono,
+    Proveedor_Mail
+  FROM gd_esquema.Maestra
+) AS source
+ON target.proveedor_codigo = source.proveedor_codigo
+WHEN NOT MATCHED THEN
+  INSERT (proveedor_codigo, proveedor_direccion, proveedor_razon_social, proveedor_telefono, proveedor_mail)
+  VALUES (source.proveedor_codigo, source.proveedor_direccion, source.Proveedor_RazonSocial, source.Proveedor_Telefono, source.Proveedor_Mail);
+
+-- COMPRA
+MERGE Compra AS target
+USING (
+  SELECT DISTINCT
+    Compra_Numero AS comp_codigo,
+    Sucursal_NroSucursal AS comp_sucursal,
+    Proveedor_Cuit AS comp_proveedor,
+    Compra_Fecha AS comp_fecha,
+    NULL AS comp_material, -- No hay campo de material por compra directa
+    Compra_Total AS comp_total
+  FROM gd_esquema.Maestra
+) AS source
+ON target.comp_codigo = source.comp_codigo
+WHEN NOT MATCHED THEN
+  INSERT (comp_codigo, comp_sucursal, comp_proveedor, comp_fecha, comp_material, comp_total)
+  VALUES (source.comp_codigo, source.comp_sucursal, source.comp_proveedor, source.comp_fecha, source.comp_material, source.comp_total);
+
+-- ITEM COMPRA
+MERGE ItemCompra AS target
+USING (
+  SELECT DISTINCT
+    Compra_Numero AS item_compra,
+    NULL AS item_material, -- No está explícito en tabla maestra
+    Detalle_Compra_Cantidad AS item_cantidad,
+    Detalle_Compra_Precio AS item_precio_unitario,
+    Detalle_Compra_SubTotal AS item_subtotal
+  FROM gd_esquema.Maestra
+) AS source
+ON target.item_compra = source.item_compra AND target.item_material IS NULL
+WHEN NOT MATCHED THEN
+  INSERT (item_compra, item_material, item_cantidad, item_precio_unitario, item_subtotal)
+  VALUES (source.item_compra, source.item_material, source.item_cantidad, source.item_precio_unitario, source.item_subtotal);
+
+-- TIPO MATERIAL
+MERGE TipoMaterial AS target
+USING (
+  SELECT DISTINCT Material_Tipo AS tipo_material_nombre
+  FROM gd_esquema.Maestra
+) AS source
+ON target.tipo_material_nombre = source.tipo_material_nombre
+WHEN NOT MATCHED THEN INSERT (tipo_material_nombre) VALUES (source.tipo_material_nombre);
+
+-- MATERIAL
+MERGE Material AS target
+USING (
+  SELECT DISTINCT
+    Material_Nombre,
+    (SELECT tipo_material_id FROM TipoMaterial WHERE tipo_material_nombre = Material_Tipo) AS material_tipo
+  FROM gd_esquema.Maestra
+) AS source
+ON target.material_tipo = source.material_tipo
+WHEN NOT MATCHED THEN INSERT (material_tipo) VALUES (source.material_tipo);
+
+-- TELA
+MERGE Tela AS target
+USING (
+  SELECT DISTINCT
+    (SELECT TOP 1 material_codigo FROM Material) AS tela_material, -- Asignación tentativa
+    Material_Precio AS tela_precio,
+    Tela_Color,
+    Tela_Textura
+  FROM gd_esquema.Maestra
+) AS source
+ON target.tela_color = source.Tela_Color AND target.tela_textura = source.Tela_Textura
+WHEN NOT MATCHED THEN
+  INSERT (tela_material, tela_precio, tela_color, tela_textura)
+  VALUES (source.tela_material, source.tela_precio, source.Tela_Color, source.Tela_Textura);
+
+-- MADERA
+MERGE Madera AS target
+USING (
+  SELECT DISTINCT
+    (SELECT TOP 1 material_codigo FROM Material) AS madera_material, -- Tentativa
+    Material_Precio AS madera_precio,
+    Madera_Color,
+    Madera_Dureza
+  FROM gd_esquema.Maestra
+) AS source
+ON target.madera_color = source.Madera_Color AND target.madera_dureza = source.Madera_Dureza
+WHEN NOT MATCHED THEN
+  INSERT (madera_material, madera_precio, madera_color, madera_dureza)
+  VALUES (source.madera_material, source.madera_precio, source.Madera_Color, source.Madera_Dureza);
+
+-- RELLENO
+MERGE Relleno AS target
+USING (
+  SELECT DISTINCT
+    (SELECT TOP 1 material_codigo FROM Material) AS relleno_material,
+    Relleno_Densidad AS relleno_densidad,
+    Material_Precio AS relleno_precio
+  FROM gd_esquema.Maestra
+) AS source
+ON target.relleno_densidad = source.relleno_densidad
+WHEN NOT MATCHED THEN
+  INSERT (relleno_material, relleno_densidad, relleno_precio)
+  VALUES (source.relleno_material, source.relleno_densidad, source.relleno_precio);
