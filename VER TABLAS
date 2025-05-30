@@ -1,0 +1,112 @@
+USE GD1C2025; -- ¡Asegúrate de que este es el nombre correcto de tu base de datos!
+GO
+
+PRINT '--- CONSULTA DE DATOS: DBO_SQUAD.Provincia ---';
+SELECT TOP 1000 * FROM DBO_SQUAD.Provincia ORDER BY provincia_codigo;
+SELECT COUNT(*) AS Total_Filas_Provincia FROM DBO_SQUAD.Provincia;
+GO
+
+PRINT '--- CONSULTA DE DATOS: DBO_SQUAD.Localidad ---';
+SELECT TOP 1000 * FROM DBO_SQUAD.Localidad ORDER BY localidad_codigo;
+SELECT COUNT(*) AS Total_Filas_Localidad FROM DBO_SQUAD.Localidad;
+GO
+
+PRINT '--- CONSULTA DE DATOS: DBO_SQUAD.Direccion ---';
+SELECT TOP 1000 * FROM DBO_SQUAD.Direccion ORDER BY direccion_codigo;
+SELECT COUNT(*) AS Total_Filas_Direccion FROM DBO_SQUAD.Direccion;
+GO
+
+PRINT '--- CONSULTA DE DATOS: DBO_SQUAD.EstadoPedido ---';
+SELECT TOP 1000 * FROM DBO_SQUAD.EstadoPedido ORDER BY estado_id;
+SELECT COUNT(*) AS Total_Filas_EstadoPedido FROM DBO_SQUAD.EstadoPedido;
+GO
+
+PRINT '--- CONSULTA DE DATOS: DBO_SQUAD.Modelo ---';
+SELECT TOP 1000 * FROM DBO_SQUAD.Modelo ORDER BY modelo_codigo;
+SELECT COUNT(*) AS Total_Filas_Modelo FROM DBO_SQUAD.Modelo;
+GO
+
+PRINT '--- CONSULTA DE DATOS: DBO_SQUAD.Medida ---';
+SELECT TOP 1000 * FROM DBO_SQUAD.Medida ORDER BY medida_codigo;
+SELECT COUNT(*) AS Total_Filas_Medida FROM DBO_SQUAD.Medida;
+GO
+
+PRINT '--- CONSULTA DE DATOS: DBO_SQUAD.Material ---';
+SELECT TOP 1000 * FROM DBO_SQUAD.Material ORDER BY material_codigo;
+SELECT COUNT(*) AS Total_Filas_Material FROM DBO_SQUAD.Material;
+GO
+
+PRINT '--- CONSULTA DE DATOS: DBO_SQUAD.Relleno ---';
+SELECT TOP 1000 * FROM DBO_SQUAD.Relleno ORDER BY relleno_id;
+SELECT COUNT(*) AS Total_Filas_Relleno FROM DBO_SQUAD.Relleno;
+GO
+
+PRINT '--- CONSULTA DE DATOS: DBO_SQUAD.Madera ---';
+SELECT TOP 1000 * FROM DBO_SQUAD.Madera ORDER BY madera_id;
+SELECT COUNT(*) AS Total_Filas_Madera FROM DBO_SQUAD.Madera;
+GO
+
+PRINT '--- CONSULTA DE DATOS: DBO_SQUAD.Tela ---';
+SELECT TOP 1000 * FROM DBO_SQUAD.Tela ORDER BY tela_id;
+SELECT COUNT(*) AS Total_Filas_Tela FROM DBO_SQUAD.Tela;
+GO
+
+PRINT '--- CONSULTA DE DATOS: DBO_SQUAD.Proveedor ---';
+SELECT TOP 1000 * FROM DBO_SQUAD.Proveedor ORDER BY proveedor_id;
+SELECT COUNT(*) AS Total_Filas_Proveedor FROM DBO_SQUAD.Proveedor;
+GO
+
+PRINT '--- CONSULTA DE DATOS: DBO_SQUAD.Sucursal ---';
+SELECT TOP 1000 * FROM DBO_SQUAD.Sucursal ORDER BY sucursal_id;
+SELECT COUNT(*) AS Total_Filas_Sucursal FROM DBO_SQUAD.Sucursal;
+GO
+
+PRINT '--- CONSULTA DE DATOS: DBO_SQUAD.Cliente ---';
+SELECT TOP 1000 * FROM DBO_SQUAD.Cliente ORDER BY Cliente_ID;
+SELECT COUNT(*) AS Total_Filas_Cliente FROM DBO_SQUAD.Cliente;
+GO
+
+PRINT '--- CONSULTA DE DATOS: DBO_SQUAD.Sillon ---';
+SELECT TOP 1000 * FROM DBO_SQUAD.Sillon ORDER BY sillon_id;
+SELECT COUNT(*) AS Total_Filas_Sillon FROM DBO_SQUAD.Sillon;
+GO
+
+PRINT '--- CONSULTA DE DATOS: DBO_SQUAD.ItemMaterial ---';
+SELECT TOP 1000 * FROM DBO_SQUAD.ItemMaterial ORDER BY item_material_sillon, item_material_material;
+SELECT COUNT(*) AS Total_Filas_ItemMaterial FROM DBO_SQUAD.ItemMaterial;
+GO
+
+PRINT '--- CONSULTA DE DATOS: DBO_SQUAD.Compra ---';
+SELECT TOP 1000 * FROM DBO_SQUAD.Compra ORDER BY compra_codigo;
+SELECT COUNT(*) AS Total_Filas_Compra FROM DBO_SQUAD.Compra;
+GO
+
+PRINT '--- CONSULTA DE DATOS: DBO_SQUAD.ItemCompra ---';
+SELECT TOP 1000 * FROM DBO_SQUAD.ItemCompra ORDER BY item_compra_id;
+SELECT COUNT(*) AS Total_Filas_ItemCompra FROM DBO_SQUAD.ItemCompra;
+GO
+
+PRINT '--- CONSULTA DE DATOS: DBO_SQUAD.Pedido ---';
+SELECT TOP 1000 * FROM DBO_SQUAD.Pedido ORDER BY pedido_codigo;
+SELECT COUNT(*) AS Total_Filas_Pedido FROM DBO_SQUAD.Pedido;
+GO
+
+PRINT '--- CONSULTA DE DATOS: DBO_SQUAD.ItemPedido ---';
+SELECT TOP 1000 * FROM DBO_SQUAD.ItemPedido ORDER BY item_pedido_codigo, item_pedido_sillon;
+SELECT COUNT(*) AS Total_Filas_ItemPedido FROM DBO_SQUAD.ItemPedido;
+GO
+
+PRINT '--- CONSULTA DE DATOS: DBO_SQUAD.Factura ---';
+SELECT TOP 1000 * FROM DBO_SQUAD.Factura ORDER BY factura_codigo;
+SELECT COUNT(*) AS Total_Filas_Factura FROM DBO_SQUAD.Factura;
+GO
+
+PRINT '--- CONSULTA DE DATOS: DBO_SQUAD.Envio ---';
+SELECT TOP 1000 * FROM DBO_SQUAD.Envio ORDER BY envio_id;
+SELECT COUNT(*) AS Total_Filas_Envio FROM DBO_SQUAD.Envio;
+GO
+
+PRINT '--- CONSULTA DE DATOS: DBO_SQUAD.ItemFactura ---';
+SELECT TOP 1000 * FROM DBO_SQUAD.ItemFactura ORDER BY item_fact_id;
+SELECT COUNT(*) AS Total_Filas_ItemFactura FROM DBO_SQUAD.ItemFactura;
+GO
