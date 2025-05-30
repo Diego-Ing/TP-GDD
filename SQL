@@ -130,12 +130,17 @@ CREATE TABLE DBO_SQUAD.Tela (
 
 -- Proveedor
 CREATE TABLE DBO_SQUAD.Proveedor (
-    proveedor_codigo CHAR(3) PRIMARY KEY,
-    proveedor_direccion INT,
-    proveedor_razon_social NVARCHAR(50),
-    proveedor_telefono VARCHAR(20),
-    proveedor_mail NVARCHAR(20),
-    FOREIGN KEY (proveedor_direccion) REFERENCES DBO_SQUAD.Direccion(direccion_codigo)
+    proveedor_id INT IDENTITY(1,1) PRIMARY KEY, -- La clave primaria preferida
+    proveedor_cuit NVARCHAR(20) NOT NULL,      -- El identificador de negocio
+    proveedor_razon_social NVARCHAR(255) NULL,
+    proveedor_telefono NVARCHAR(50) NULL,
+    proveedor_direccion NVARCHAR(255) NULL,
+    proveedor_localidad INT NULL,
+    proveedor_provincia INT NULL,
+    -- Asegura que cada combinación de atributos de proveedor (incluyendo CUIT) sea única
+    CONSTRAINT UQ_Proveedor_Datos UNIQUE (proveedor_cuit, proveedor_razon_social, proveedor_telefono, proveedor_direccion, proveedor_localidad, proveedor_provincia),
+    FOREIGN KEY (proveedor_localidad) REFERENCES DBO_SQUAD.Localidad(localidad_codigo),
+    FOREIGN KEY (proveedor_provincia) REFERENCES DBO_SQUAD.Provincia(provincia_codigo)
 );
 
 -- Sucursal
@@ -184,21 +189,23 @@ CREATE TABLE DBO_SQUAD.ItemMaterial (
 );
 -- Compra
 CREATE TABLE DBO_SQUAD.Compra (
-    compra_codigo CHAR(6) PRIMARY KEY,
-    compra_proveedor CHAR(3),
-    compra_fecha SMALLDATETIME,
-    compra_total DECIMAL(12,2),
-    FOREIGN KEY (compra_proveedor) REFERENCES DBO_SQUAD.Proveedor(proveedor_codigo)
+    compra_codigo BIGINT PRIMARY KEY,
+    compra_fecha DATETIME NULL,
+    compra_proveedor INT NULL,
+    compra_total DECIMAL(12,2) NULL,
+    FOREIGN KEY (compra_proveedor) REFERENCES DBO_SQUAD.Proveedor(proveedor_id)
 );
 
 -- ItemCompra
 CREATE TABLE DBO_SQUAD.ItemCompra (
-    item_compra_codigo CHAR(6),
-    item_compra_material INT,
-    item_compra_cantidad INT,
-    PRIMARY KEY (item_compra_codigo, item_compra_material),
+    item_compra_id INT IDENTITY(1,1) PRIMARY KEY, -- PK sustituta
+    item_compra_codigo BIGINT NOT NULL,          -- FK a DBO_SQUAD.Compra.compra_codigo
+    item_compra_sillon INT NULL,                 -- FK a DBO_SQUAD.Sillon.sillon_id (Acepta NULLs)
+    item_compra_cantidad INT NULL,
+    item_compra_precio_unitario DECIMAL(12,2) NULL,
+    item_compra_subtotal DECIMAL(12,2) NULL,
     FOREIGN KEY (item_compra_codigo) REFERENCES DBO_SQUAD.Compra(compra_codigo),
-    FOREIGN KEY (item_compra_material) REFERENCES DBO_SQUAD.Material(material_codigo)
+    FOREIGN KEY (item_compra_sillon) REFERENCES DBO_SQUAD.Sillon(sillon_id) -- Se mantiene la FK para futuros datos
 );
 
 -- Pedido
@@ -226,30 +233,33 @@ CREATE TABLE DBO_SQUAD.ItemPedido (
 
 -- Factura
 CREATE TABLE DBO_SQUAD.Factura (
-    factura_codigo CHAR(6) PRIMARY KEY,
-    factura_pedido BIGINT,
-    factura_fecha SMALLDATETIME,
-    factura_total DECIMAL(12,2),
-    FOREIGN KEY (factura_pedido) REFERENCES DBO_SQUAD.Pedido(pedido_codigo)
+    factura_codigo BIGINT PRIMARY KEY,
+    fact_fecha DATETIME2(6) NULL,
+    fact_total DECIMAL(18,2) NULL
 );
 
 -- ItemFactura
 CREATE TABLE DBO_SQUAD.ItemFactura (
-    item_factura_codigo CHAR(6),
-    item_factura_sillon INT,
-    item_factura_cantidad INT,
-    PRIMARY KEY (item_factura_codigo, item_factura_sillon),
-    FOREIGN KEY (item_factura_codigo) REFERENCES DBO_SQUAD.Factura(factura_codigo),
-    FOREIGN KEY (item_factura_sillon) REFERENCES DBO_SQUAD.Sillon(sillon_id)
+    item_fact_id INT IDENTITY(1,1) PRIMARY KEY,
+    item_fact_codigo BIGINT NOT NULL,           -- FK a DBO_SQUAD.Factura.factura_codigo
+    item_fact_sillon INT NULL,                  -- Permanece NULLable (no hay datos en Maestra para vincular)
+    item_fact_precio DECIMAL(18,2) NULL,       -- ¡AHORA NULLABLE!
+    item_fact_cantidad INT NULL,                -- ¡AHORA NULLABLE!
+    item_fact_subtotal DECIMAL(18,2) NULL,     -- ¡AHORA NULLABLE!
+    FOREIGN KEY (item_fact_codigo) REFERENCES DBO_SQUAD.Factura(factura_codigo),
+    FOREIGN KEY (item_fact_sillon) REFERENCES DBO_SQUAD.Sillon(sillon_id)
 );
 
 -- Envio
 CREATE TABLE DBO_SQUAD.Envio (
-    envio_codigo CHAR(6) PRIMARY KEY,
-    envio_direccion INT,
-    envio_fecha SMALLDATETIME,
-    envio_factura CHAR(6),
-    FOREIGN KEY (envio_direccion) REFERENCES DBO_SQUAD.Direccion(direccion_codigo),
+    envio_id INT IDENTITY(1,1) PRIMARY KEY,
+    envio_codigo DECIMAL(18,0) UNIQUE,
+    envio_factura BIGINT NOT NULL, -- Asumo que un envío siempre está asociado a una factura
+    envio_fecha_programada DATETIME2(6) NULL,
+    envio_fecha_entrega DATETIME2(6) NULL,
+    envio_importe_traslado DECIMAL(18,2) NULL,
+    envio_importe_subida DECIMAL(18,2) NULL,
+    envio_total DECIMAL(18,2) NULL,
     FOREIGN KEY (envio_factura) REFERENCES DBO_SQUAD.Factura(factura_codigo)
 );
 
@@ -556,7 +566,145 @@ WHERE
     AND m.Sillon_Medida_Precio IS NOT NULL;
 PRINT 'Tabla DBO_SQUAD.ItemPedido creada y poblada.';
 
+											------------------------------
+													-- MIGRO PROVEEDOR--
 
+INSERT INTO DBO_SQUAD.Proveedor (
+    proveedor_cuit,
+    proveedor_razon_social,
+    proveedor_telefono,
+    proveedor_direccion,
+    proveedor_localidad,
+    proveedor_provincia
+)
+SELECT DISTINCT
+    -- Usamos LEFT() para asegurar que los datos no excedan el tamaño de la columna
+    LEFT(m.Proveedor_Cuit, 20),
+    LEFT(m.Proveedor_RazonSocial, 255),
+    LEFT(m.Proveedor_Telefono, 50),
+    LEFT(m.Proveedor_Direccion, 255),
+    -- Obtenemos el ID de Localidad haciendo JOIN por nombre y provincia ID
+    loc.localidad_codigo,
+    -- Obtenemos el ID de Provincia haciendo JOIN por nombre
+    prov.provincia_codigo
+FROM
+    gd_esquema.Maestra m
+-- JOIN a DBO_SQUAD.Provincia para obtener el provincia_id
+LEFT JOIN DBO_SQUAD.Provincia prov
+    ON UPPER(TRIM(m.Proveedor_Provincia)) = UPPER(TRIM(prov.provincia_nombre))
+-- JOIN a DBO_SQUAD.Localidad para obtener el localidad_codigo (requiere unirse también a la provincia)
+LEFT JOIN DBO_SQUAD.Localidad loc
+    ON UPPER(TRIM(m.Proveedor_Localidad)) = UPPER(TRIM(loc.localidad_nombre))
+    AND loc.localidad_provincia = prov.provincia_codigo -- Asegura que la localidad pertenezca a la provincia correcta
+WHERE
+    m.Proveedor_Cuit IS NOT NULL; -- Asegura que solo se procesen registros con CUIT
+
+PRINT 'Tabla DBO_SQUAD.Proveedor creada y poblada.';
+									------------------------------
+											-- MIGRO COMPRA--
+
+
+INSERT INTO DBO_SQUAD.Compra (compra_codigo, compra_fecha, compra_proveedor, compra_total)
+SELECT DISTINCT
+    CAST(m.Compra_Numero AS BIGINT),
+    CAST(m.Compra_Fecha AS DATETIME),
+    pr.proveedor_id,
+    CAST(m.Compra_Total AS DECIMAL(12,2))
+FROM
+    gd_esquema.Maestra m
+-- JOIN a DBO_SQUAD.Proveedor para obtener el proveedor_id
+-- Utiliza todas las columnas que forman el UNIQUE CONSTRAINT en DBO_SQUAD.Proveedor
+LEFT JOIN DBO_SQUAD.Proveedor pr
+    ON LEFT(m.Proveedor_Cuit, 20) = pr.proveedor_cuit
+    AND LEFT(m.Proveedor_RazonSocial, 255) = pr.proveedor_razon_social
+    AND LEFT(m.Proveedor_Telefono, 50) = pr.proveedor_telefono
+    AND LEFT(m.Proveedor_Direccion, 255) = pr.proveedor_direccion
+    -- Subconsultas anidadas para vincular Localidad y Provincia
+    AND pr.proveedor_localidad = (
+        SELECT localidad_codigo
+        FROM DBO_SQUAD.Localidad l
+        JOIN DBO_SQUAD.Provincia p ON l.localidad_provincia = p.provincia_codigo
+        WHERE UPPER(TRIM(l.localidad_nombre)) = UPPER(TRIM(m.Proveedor_Localidad))
+          AND UPPER(TRIM(p.provincia_nombre)) = UPPER(TRIM(m.Proveedor_Provincia))
+    )
+    AND pr.proveedor_provincia = (
+        SELECT provincia_codigo
+        FROM DBO_SQUAD.Provincia
+        WHERE UPPER(TRIM(provincia_nombre)) = UPPER(TRIM(m.Proveedor_Provincia))
+    )
+WHERE
+    m.Compra_Numero IS NOT NULL; -- Asegúrate de que haya un número de compra
+PRINT 'Tabla DBO_SQUAD.Compra creada y poblada.';
+												------------------------------
+													-- MIGRO ITEMCOMPRA--
+
+INSERT INTO DBO_SQUAD.ItemCompra (item_compra_codigo, item_compra_sillon, item_compra_cantidad, item_compra_precio_unitario, item_compra_subtotal)
+SELECT DISTINCT
+    CAST(m.Compra_Numero AS BIGINT),
+    NULL AS item_compra_sillon, -- Siempre será NULL, porque no hay datos de sillón para vincular
+    CAST(m.Detalle_Compra_Cantidad AS INT),
+    CAST(m.Detalle_Compra_Precio AS DECIMAL(12,2)),
+    CAST(m.Detalle_Compra_SubTotal AS DECIMAL(12,2))
+FROM
+    gd_esquema.Maestra m
+WHERE
+    m.Compra_Numero IS NOT NULL -- La compra debe tener un número
+    AND m.Detalle_Compra_Cantidad IS NOT NULL -- Y debe tener una cantidad
+    AND m.Detalle_Compra_Precio IS NOT NULL -- Y un precio
+    AND m.Detalle_Compra_SubTotal IS NOT NULL; -- Y un subtotal
+
+PRINT 'Tabla DBO_SQUAD.ItemCompra creada y poblada (sin vinculación a Sillón).';
+												------------------------------
+													-- MIGRO FACTURA--
+
+
+INSERT INTO DBO_SQUAD.Factura (factura_codigo, fact_fecha, fact_total)
+SELECT DISTINCT
+    CAST(m.Factura_Numero AS BIGINT),
+    CAST(m.Factura_Fecha AS DATETIME2(6)),
+    CAST(m.Factura_Total AS DECIMAL(18,2))
+FROM
+    gd_esquema.Maestra m
+WHERE
+    m.Factura_Numero IS NOT NULL; -- Solo facturas con número
+PRINT 'Tabla DBO_SQUAD.Factura creada y poblada.';
+											------------------------------
+													-- MIGRO ENVIO--
+	
+
+INSERT INTO DBO_SQUAD.Envio (envio_codigo, envio_factura, envio_fecha_programada, envio_fecha_entrega, envio_importe_traslado, envio_importe_subida, envio_total)
+SELECT DISTINCT
+    CAST(m.Envio_Numero AS DECIMAL(18,0)),
+    CAST(m.Factura_Numero AS BIGINT), -- Vincula a la Factura
+    CAST(m.Envio_Fecha_Programada AS DATETIME2(6)),
+    CAST(m.Envio_Fecha AS DATETIME2(6)),
+    CAST(m.Envio_ImporteTraslado AS DECIMAL(18,2)),
+    CAST(m.Envio_ImporteSubida AS DECIMAL(18,2)),
+    CAST(m.Envio_Total AS DECIMAL(18,2))
+FROM
+    gd_esquema.Maestra m
+WHERE
+    m.Envio_Numero IS NOT NULL; -- Solo si hay un número de envío
+PRINT 'Tabla DBO_SQUAD.Envio creada y poblada.';
+
+												------------------------------
+													-- MIGRO ITEMFACTURA--
+
+INSERT INTO DBO_SQUAD.ItemFactura (item_fact_codigo, item_fact_sillon, item_fact_precio, item_fact_cantidad, item_fact_subtotal)
+SELECT DISTINCT
+    CAST(m.Factura_Numero AS BIGINT),
+    NULL AS item_fact_sillon, -- Siempre NULL si no hay datos de sillón en la Maestra para facturas
+    CAST(m.Detalle_Factura_Precio AS DECIMAL(18,2)),
+    CAST(m.Detalle_Factura_Cantidad AS INT),
+    CAST(m.Detalle_Factura_SubTotal AS DECIMAL(18,2))
+FROM
+    gd_esquema.Maestra m
+WHERE
+    m.Factura_Numero IS NOT NULL
+    AND (m.Detalle_Factura_Cantidad IS NOT NULL -- Al menos uno de estos campos debe tener un valor
+         OR m.Detalle_Factura_Precio IS NOT NULL
+         OR m.Detalle_Factura_SubTotal IS NOT NULL);
+PRINT 'Tabla DBO_SQUAD.ItemFactura creada y poblada.';
 -- Ver todas las provincias migradas
 SELECT *
 FROM DBO_SQUAD.Provincia
