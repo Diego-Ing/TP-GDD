@@ -1,4 +1,4 @@
-USE GD1C2025; -- ¡Asegúrate de que este es el nombre correcto de tu base de datos!
+USE GD1C2025; 
 GO
 
 PRINT '--- CONSULTA DE DATOS: DBO_SQUAD.Provincia ---';
