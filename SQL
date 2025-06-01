@@ -2,92 +2,92 @@ USE GD1C2025;
 GO
 
 
-IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'DBO_SQUAD')
+IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'DB_SQUAD')
 BEGIN
-    EXEC('CREATE SCHEMA DBO_SQUAD');
+    EXEC('CREATE SCHEMA DB_SQUAD');
 END
 GO
 
--- Paso 1: Eliminar FOREIGN KEYS del esquema DBO_SQUAD
+-- Paso 1: Eliminar FOREIGN KEYS del esquema DB_SQUAD
 DECLARE @sql NVARCHAR(MAX) = '';
 SELECT @sql += 'ALTER TABLE [' + s.name + '].[' + t.name + '] DROP CONSTRAINT [' + fk.name + '];'
 FROM sys.foreign_keys fk
 JOIN sys.tables t ON fk.parent_object_id = t.object_id
 JOIN sys.schemas s ON t.schema_id = s.schema_id
-WHERE s.name = 'DBO_SQUAD';
+WHERE s.name = 'DB_SQUAD';
 EXEC sp_executesql @sql;
 use GD1C2025
 -- Paso 2: Eliminar tablas en orden lógico
-DROP TABLE IF EXISTS DBO_SQUAD.DetalleFactura;
-DROP TABLE IF EXISTS DBO_SQUAD.DetallePedido;
-DROP TABLE IF EXISTS DBO_SQUAD.Modelo;
-DROP TABLE IF EXISTS DBO_SQUAD.Medida;
-DROP TABLE IF EXISTS DBO_SQUAD.Material;
-DROP TABLE IF EXISTS DBO_SQUAD.Relleno;
-DROP TABLE IF EXISTS DBO_SQUAD.Madera;
-DROP TABLE IF EXISTS DBO_SQUAD.Tela;
-DROP TABLE IF EXISTS DBO_SQUAD.Sillon;
-DROP TABLE IF EXISTS DBO_SQUAD.ItemMaterial;
-DROP TABLE IF EXISTS DBO_SQUAD.Compra;
-DROP TABLE IF EXISTS DBO_SQUAD.ItemCompra;
-DROP TABLE IF EXISTS DBO_SQUAD.ItemPedido;
-DROP TABLE IF EXISTS DBO_SQUAD.Item;
-DROP TABLE IF EXISTS DBO_SQUAD.ItemFactura;
-DROP TABLE IF EXISTS DBO_SQUAD.Factura;
-DROP TABLE IF EXISTS DBO_SQUAD.Pedido;
-DROP TABLE IF EXISTS DBO_SQUAD.Cliente;
-DROP TABLE IF EXISTS DBO_SQUAD.Empleado;
-DROP TABLE IF EXISTS DBO_SQUAD.Sucursal;
-DROP TABLE IF EXISTS DBO_SQUAD.Proveedor;
-DROP TABLE IF EXISTS DBO_SQUAD.Producto;
-DROP TABLE IF EXISTS DBO_SQUAD.Categoria;
-DROP TABLE IF EXISTS DBO_SQUAD.Subcategoria;
-DROP TABLE IF EXISTS DBO_SQUAD.EstadoPedido;
-DROP TABLE IF EXISTS DBO_SQUAD.Envio;
-DROP TABLE IF EXISTS DBO_SQUAD.Direccion;
-DROP TABLE IF EXISTS DBO_SQUAD.Localidad;
-DROP TABLE IF EXISTS DBO_SQUAD.Provincia;
+DROP TABLE IF EXISTS DB_SQUAD.DetalleFactura;
+DROP TABLE IF EXISTS DB_SQUAD.DetallePedido;
+DROP TABLE IF EXISTS DB_SQUAD.Modelo;
+DROP TABLE IF EXISTS DB_SQUAD.Medida;
+DROP TABLE IF EXISTS DB_SQUAD.Material;
+DROP TABLE IF EXISTS DB_SQUAD.Relleno;
+DROP TABLE IF EXISTS DB_SQUAD.Madera;
+DROP TABLE IF EXISTS DB_SQUAD.Tela;
+DROP TABLE IF EXISTS DB_SQUAD.Sillon;
+DROP TABLE IF EXISTS DB_SQUAD.ItemMaterial;
+DROP TABLE IF EXISTS DB_SQUAD.Compra;
+DROP TABLE IF EXISTS DB_SQUAD.ItemCompra;
+DROP TABLE IF EXISTS DB_SQUAD.ItemPedido;
+DROP TABLE IF EXISTS DB_SQUAD.Item;
+DROP TABLE IF EXISTS DB_SQUAD.ItemFactura;
+DROP TABLE IF EXISTS DB_SQUAD.Factura;
+DROP TABLE IF EXISTS DB_SQUAD.Pedido;
+DROP TABLE IF EXISTS DB_SQUAD.Cliente;
+DROP TABLE IF EXISTS DB_SQUAD.Empleado;
+DROP TABLE IF EXISTS DB_SQUAD.Sucursal;
+DROP TABLE IF EXISTS DB_SQUAD.Proveedor;
+DROP TABLE IF EXISTS DB_SQUAD.Producto;
+DROP TABLE IF EXISTS DB_SQUAD.Categoria;
+DROP TABLE IF EXISTS DB_SQUAD.Subcategoria;
+DROP TABLE IF EXISTS DB_SQUAD.EstadoPedido;
+DROP TABLE IF EXISTS DB_SQUAD.Envio;
+DROP TABLE IF EXISTS DB_SQUAD.Direccion;
+DROP TABLE IF EXISTS DB_SQUAD.Localidad;
+DROP TABLE IF EXISTS DB_SQUAD.Provincia;
 
 
 -- Provincia
-CREATE TABLE DBO_SQUAD.Provincia (
+CREATE TABLE DB_SQUAD.Provincia (
     provincia_codigo INT IDENTITY(1,1) PRIMARY KEY,
     provincia_nombre NVARCHAR(255) NOT NULL UNIQUE
 );
 
 -- Localidad
-CREATE TABLE DBO_SQUAD.Localidad (
+CREATE TABLE DB_SQUAD.Localidad (
     localidad_codigo INT IDENTITY(1,1) PRIMARY KEY,
-    localidad_provincia INT NOT NULL, -- FK a DBO_SQUAD.Provincia
+    localidad_provincia INT NOT NULL, -- FK a DB_SQUAD.Provincia
     localidad_nombre NVARCHAR(255) NOT NULL,
-    FOREIGN KEY (localidad_provincia) REFERENCES DBO_SQUAD.Provincia(provincia_codigo),
+    FOREIGN KEY (localidad_provincia) REFERENCES DB_SQUAD.Provincia(provincia_codigo),
     CONSTRAINT UQ_Localidad_Nombre_Provincia UNIQUE (localidad_nombre, localidad_provincia) -- Para evitar duplicados lógicos
 );
 
 -- Direccion
-CREATE TABLE DBO_SQUAD.Direccion (
+CREATE TABLE DB_SQUAD.Direccion (
     direccion_codigo INT IDENTITY(1,1) PRIMARY KEY,
-    direccion_localidad INT NOT NULL, -- FK a DBO_SQUAD.Localidad
+    direccion_localidad INT NOT NULL, -- FK a DB_SQUAD.Localidad
     direccion_nombre NVARCHAR(255) NOT NULL,
-    FOREIGN KEY (direccion_localidad) REFERENCES DBO_SQUAD.Localidad(localidad_codigo),
+    FOREIGN KEY (direccion_localidad) REFERENCES DB_SQUAD.Localidad(localidad_codigo),
     CONSTRAINT UQ_Direccion_Nombre_Localidad UNIQUE (direccion_nombre, direccion_localidad) -- Para evitar duplicados lógicos
 );
 
 -- EstadoPedido
-CREATE TABLE DBO_SQUAD.EstadoPedido (
+CREATE TABLE DB_SQUAD.EstadoPedido (
     estado_id CHAR(1) PRIMARY KEY,
     estado_nombre VARCHAR(10)
 );
 
 -- Modelo
-CREATE TABLE DBO_SQUAD.Modelo (
+CREATE TABLE DB_SQUAD.Modelo (
     modelo_codigo BIGINT PRIMARY KEY,
     modelo_descripcion NVARCHAR(100),
     modelo_precio_base DECIMAL(12,2)
 );
 
 -- Medida
-CREATE TABLE DBO_SQUAD.Medida (
+CREATE TABLE DB_SQUAD.Medida (
     medida_codigo INT IDENTITY(1,1) PRIMARY KEY, 
     medida_alto DECIMAL(12,2),
     medida_ancho DECIMAL(12,2),
@@ -96,40 +96,40 @@ CREATE TABLE DBO_SQUAD.Medida (
 );
 
 -- Material
-CREATE TABLE DBO_SQUAD.Material (
+CREATE TABLE DB_SQUAD.Material (
     material_codigo INT IDENTITY(1,1) PRIMARY KEY,
     material_precio DECIMAL(12,2) NULL,
     material_descripcion NVARCHAR(50) NULL -- Asumo que Material_Descripcion/Nombre no serán > 50 chars
 );
 
 -- Relleno
-CREATE TABLE DBO_SQUAD.Relleno (
+CREATE TABLE DB_SQUAD.Relleno (
     relleno_id INT IDENTITY(1,1) PRIMARY KEY,      
     relleno_material INT NULL,                      
     relleno_densidad DECIMAL(12,2) NULL,           
-    FOREIGN KEY (relleno_material) REFERENCES DBO_SQUAD.Material(material_codigo)
+    FOREIGN KEY (relleno_material) REFERENCES DB_SQUAD.Material(material_codigo)
 );
 
 -- Madera
-CREATE TABLE DBO_SQUAD.Madera (
+CREATE TABLE DB_SQUAD.Madera (
     madera_id INT IDENTITY(1,1) PRIMARY KEY,      
     madera_material INT NULL,                     
     madera_tipo NVARCHAR(10) NULL,                 -- Asumimos Madera_Color de la maestra
     madera_dureza NVARCHAR(10) NULL,
-    FOREIGN KEY (madera_material) REFERENCES DBO_SQUAD.Material(material_codigo)
+    FOREIGN KEY (madera_material) REFERENCES DB_SQUAD.Material(material_codigo)
 );
 
 -- Tela
-CREATE TABLE DBO_SQUAD.Tela (
+CREATE TABLE DB_SQUAD.Tela (
     tela_id INT IDENTITY(1,1) PRIMARY KEY,       
     tela_material INT NULL,                      -- ¡Ahora es una FK, no PK!
     tela_color NVARCHAR(10) NULL,
     tela_textura NVARCHAR(10) NULL,
-    FOREIGN KEY (tela_material) REFERENCES DBO_SQUAD.Material(material_codigo)
+    FOREIGN KEY (tela_material) REFERENCES DB_SQUAD.Material(material_codigo)
 );
 
 -- Proveedor
-CREATE TABLE DBO_SQUAD.Proveedor (
+CREATE TABLE DB_SQUAD.Proveedor (
     proveedor_id INT IDENTITY(1,1) PRIMARY KEY, -- La clave primaria preferida
     proveedor_cuit NVARCHAR(20) NOT NULL,      -- El identificador de negocio
     proveedor_razon_social NVARCHAR(255) NULL,
@@ -139,21 +139,21 @@ CREATE TABLE DBO_SQUAD.Proveedor (
     proveedor_provincia INT NULL,
     -- Asegura que cada combinación de atributos de proveedor (incluyendo CUIT) sea única
     CONSTRAINT UQ_Proveedor_Datos UNIQUE (proveedor_cuit, proveedor_razon_social, proveedor_telefono, proveedor_direccion, proveedor_localidad, proveedor_provincia),
-    FOREIGN KEY (proveedor_localidad) REFERENCES DBO_SQUAD.Localidad(localidad_codigo),
-    FOREIGN KEY (proveedor_provincia) REFERENCES DBO_SQUAD.Provincia(provincia_codigo)
+    FOREIGN KEY (proveedor_localidad) REFERENCES DB_SQUAD.Localidad(localidad_codigo),
+    FOREIGN KEY (proveedor_provincia) REFERENCES DB_SQUAD.Provincia(provincia_codigo)
 );
 
 -- Sucursal
-CREATE TABLE DBO_SQUAD.Sucursal (
+CREATE TABLE DB_SQUAD.Sucursal (
     sucursal_id INT IDENTITY(1,1) PRIMARY KEY, -- Nueva clave primaria IDENTITY
     sucursal_numero_maestra BIGINT NULL,       -- Columna para el Sucursal_NroSucursal de la maestra
     sucursal_direccion INT NULL,
     sucursal_mail NVARCHAR(50) NULL,
-    FOREIGN KEY (sucursal_direccion) REFERENCES DBO_SQUAD.Direccion(direccion_codigo)
+    FOREIGN KEY (sucursal_direccion) REFERENCES DB_SQUAD.Direccion(direccion_codigo)
 );
 
 -- Cliente
-CREATE TABLE DBO_SQUAD.Cliente (
+CREATE TABLE DB_SQUAD.Cliente (
     Cliente_ID INT IDENTITY(1,1) PRIMARY KEY,
     Cliente_Dni NVARCHAR(20) NULL,           -- Deja como NVARCHAR para flexibilidad, convertiremos el origen
     Cliente_Nombre NVARCHAR(255),
@@ -168,89 +168,89 @@ CREATE TABLE DBO_SQUAD.Cliente (
 
 
 -- Sillon
-CREATE TABLE DBO_SQUAD.Sillon (
+CREATE TABLE DB_SQUAD.Sillon (
     sillon_id INT IDENTITY(1,1) PRIMARY KEY,
     sillon_codigo_maestra BIGINT NOT NULL,
     sillon_modelo BIGINT,
     sillon_medidas INT,
     CONSTRAINT UQ_Sillon_Combinacion UNIQUE (sillon_codigo_maestra, sillon_modelo, sillon_medidas),
-    FOREIGN KEY (sillon_modelo) REFERENCES DBO_SQUAD.Modelo(modelo_codigo),
-    FOREIGN KEY (sillon_medidas) REFERENCES DBO_SQUAD.Medida(medida_codigo)
+    FOREIGN KEY (sillon_modelo) REFERENCES DB_SQUAD.Modelo(modelo_codigo),
+    FOREIGN KEY (sillon_medidas) REFERENCES DB_SQUAD.Medida(medida_codigo)
 );
 
 -- ItemMaterial
-CREATE TABLE DBO_SQUAD.ItemMaterial (
+CREATE TABLE DB_SQUAD.ItemMaterial (
     item_material_sillon INT,
     item_material_material INT,
     PRIMARY KEY (item_material_sillon, item_material_material),
-    FOREIGN KEY (item_material_sillon) REFERENCES DBO_SQUAD.Sillon(sillon_id),
-    FOREIGN KEY (item_material_material) REFERENCES DBO_SQUAD.Material(material_codigo)
+    FOREIGN KEY (item_material_sillon) REFERENCES DB_SQUAD.Sillon(sillon_id),
+    FOREIGN KEY (item_material_material) REFERENCES DB_SQUAD.Material(material_codigo)
 );
 -- Compra
-CREATE TABLE DBO_SQUAD.Compra (
+CREATE TABLE DB_SQUAD.Compra (
     compra_codigo BIGINT PRIMARY KEY,
     compra_fecha DATETIME NULL,
     compra_proveedor INT NULL,
     compra_total DECIMAL(12,2) NULL,
-    FOREIGN KEY (compra_proveedor) REFERENCES DBO_SQUAD.Proveedor(proveedor_id)
+    FOREIGN KEY (compra_proveedor) REFERENCES DB_SQUAD.Proveedor(proveedor_id)
 );
 
 -- ItemCompra
-CREATE TABLE DBO_SQUAD.ItemCompra (
+CREATE TABLE DB_SQUAD.ItemCompra (
     item_compra_id INT IDENTITY(1,1) PRIMARY KEY, 
-    item_compra_codigo BIGINT NOT NULL,          -- FK a DBO_SQUAD.Compra.compra_codigo
-    item_compra_sillon INT NULL,                 -- FK a DBO_SQUAD.Sillon.sillon_id (Acepta NULLs)
+    item_compra_codigo BIGINT NOT NULL,          -- FK a DB_SQUAD.Compra.compra_codigo
+    item_compra_sillon INT NULL,                 -- FK a DB_SQUAD.Sillon.sillon_id (Acepta NULLs)
     item_compra_cantidad INT NULL,
     item_compra_precio_unitario DECIMAL(12,2) NULL,
     item_compra_subtotal DECIMAL(12,2) NULL,
-    FOREIGN KEY (item_compra_codigo) REFERENCES DBO_SQUAD.Compra(compra_codigo),
-    FOREIGN KEY (item_compra_sillon) REFERENCES DBO_SQUAD.Sillon(sillon_id) -- Se mantiene la FK para futuros datos
+    FOREIGN KEY (item_compra_codigo) REFERENCES DB_SQUAD.Compra(compra_codigo),
+    FOREIGN KEY (item_compra_sillon) REFERENCES DB_SQUAD.Sillon(sillon_id) -- Se mantiene la FK para futuros datos
 );
 
 -- Pedido
-CREATE TABLE DBO_SQUAD.Pedido (
+CREATE TABLE DB_SQUAD.Pedido (
     pedido_codigo BIGINT PRIMARY KEY,
-    pedido_sucursal INT,                 -- FK a DBO_SQUAD.Sucursal.sucursal_id (IDENTITY)
+    pedido_sucursal INT,                 -- FK a DB_SQUAD.Sucursal.sucursal_id (IDENTITY)
     pedido_cliente INT,         
     pedido_fecha DATETIME NOT NULL,
     pedido_total DECIMAL(12,2) NOT NULL,
     pedido_estado CHAR(1),
-    FOREIGN KEY (pedido_sucursal) REFERENCES DBO_SQUAD.Sucursal(sucursal_id),
-    FOREIGN KEY (pedido_cliente) REFERENCES DBO_SQUAD.Cliente(Cliente_ID), -- Referencia a Cliente.Cliente_Dni
-    FOREIGN KEY (pedido_estado) REFERENCES DBO_SQUAD.EstadoPedido(estado_id)
+    FOREIGN KEY (pedido_sucursal) REFERENCES DB_SQUAD.Sucursal(sucursal_id),
+    FOREIGN KEY (pedido_cliente) REFERENCES DB_SQUAD.Cliente(Cliente_ID), -- Referencia a Cliente.Cliente_Dni
+    FOREIGN KEY (pedido_estado) REFERENCES DB_SQUAD.EstadoPedido(estado_id)
 );
 
 -- ItemPedido
-CREATE TABLE DBO_SQUAD.ItemPedido (
+CREATE TABLE DB_SQUAD.ItemPedido (
     item_pedido_codigo BIGINT,
     item_pedido_sillon INT,
     item_pedido_cantidad INT,
     PRIMARY KEY (item_pedido_codigo, item_pedido_sillon),
-    FOREIGN KEY (item_pedido_codigo) REFERENCES DBO_SQUAD.Pedido(pedido_codigo),
-    FOREIGN KEY (item_pedido_sillon) REFERENCES DBO_SQUAD.Sillon(sillon_id) 
+    FOREIGN KEY (item_pedido_codigo) REFERENCES DB_SQUAD.Pedido(pedido_codigo),
+    FOREIGN KEY (item_pedido_sillon) REFERENCES DB_SQUAD.Sillon(sillon_id) 
 );
 
 -- Factura
-CREATE TABLE DBO_SQUAD.Factura (
+CREATE TABLE DB_SQUAD.Factura (
     factura_codigo BIGINT PRIMARY KEY,
     fact_fecha DATETIME2(6) NULL,
     fact_total DECIMAL(18,2) NULL
 );
 
 -- ItemFactura
-CREATE TABLE DBO_SQUAD.ItemFactura (
+CREATE TABLE DB_SQUAD.ItemFactura (
     item_fact_id INT IDENTITY(1,1) PRIMARY KEY,
-    item_fact_codigo BIGINT NOT NULL,           -- FK a DBO_SQUAD.Factura.factura_codigo
+    item_fact_codigo BIGINT NOT NULL,           -- FK a DB_SQUAD.Factura.factura_codigo
     item_fact_sillon INT NULL,                  -- Permanece NULLable (no hay datos en Maestra para vincular)
     item_fact_precio DECIMAL(18,2) NULL,       
     item_fact_cantidad INT NULL,               
     item_fact_subtotal DECIMAL(18,2) NULL,     
-    FOREIGN KEY (item_fact_codigo) REFERENCES DBO_SQUAD.Factura(factura_codigo),
-    FOREIGN KEY (item_fact_sillon) REFERENCES DBO_SQUAD.Sillon(sillon_id)
+    FOREIGN KEY (item_fact_codigo) REFERENCES DB_SQUAD.Factura(factura_codigo),
+    FOREIGN KEY (item_fact_sillon) REFERENCES DB_SQUAD.Sillon(sillon_id)
 );
 
 -- Envio
-CREATE TABLE DBO_SQUAD.Envio (
+CREATE TABLE DB_SQUAD.Envio (
     envio_id INT IDENTITY(1,1) PRIMARY KEY,
     envio_codigo DECIMAL(18,0) UNIQUE,
     envio_factura BIGINT NOT NULL, -- Asumo que un envío siempre está asociado a una factura
@@ -259,11 +259,11 @@ CREATE TABLE DBO_SQUAD.Envio (
     envio_importe_traslado DECIMAL(18,2) NULL,
     envio_importe_subida DECIMAL(18,2) NULL,
     envio_total DECIMAL(18,2) NULL,
-    FOREIGN KEY (envio_factura) REFERENCES DBO_SQUAD.Factura(factura_codigo)
+    FOREIGN KEY (envio_factura) REFERENCES DB_SQUAD.Factura(factura_codigo)
 );
 
 									-- MIGRACION DE PROVINCIA--
-INSERT INTO DBO_SQUAD.Provincia (provincia_nombre)
+INSERT INTO DB_SQUAD.Provincia (provincia_nombre)
 SELECT DISTINCT ProvinciaNombre
 FROM (
     SELECT Sucursal_Provincia AS ProvinciaNombre FROM gd_esquema.Maestra WHERE Sucursal_Provincia IS NOT NULL
@@ -273,55 +273,55 @@ FROM (
     SELECT Proveedor_Provincia AS ProvinciaNombre FROM gd_esquema.Maestra WHERE Proveedor_Provincia IS NOT NULL
 ) AS TodasLasProvincias
 WHERE ProvinciaNombre IS NOT NULL;
-PRINT 'Tabla DBO_SQUAD.Provincia creada y poblada.';
+PRINT 'Tabla DB_SQUAD.Provincia creada y poblada.';
 
 											----------------------
 											-- MIGRACION DE LOCALIDAD --- LISTO
-INSERT INTO DBO_SQUAD.Localidad (localidad_nombre, localidad_provincia)
+INSERT INTO DB_SQUAD.Localidad (localidad_nombre, localidad_provincia)
 SELECT DISTINCT
     COALESCE(m.Sucursal_Localidad, m.Cliente_Localidad, m.Proveedor_Localidad) AS LocalidadNombre,
     prov.provincia_codigo
 FROM gd_esquema.Maestra m
-JOIN DBO_SQUAD.Provincia prov ON COALESCE(m.Sucursal_Provincia, m.Cliente_Provincia, m.Proveedor_Provincia) = prov.provincia_nombre
+JOIN DB_SQUAD.Provincia prov ON COALESCE(m.Sucursal_Provincia, m.Cliente_Provincia, m.Proveedor_Provincia) = prov.provincia_nombre
 WHERE COALESCE(m.Sucursal_Localidad, m.Cliente_Localidad, m.Proveedor_Localidad) IS NOT NULL;
-PRINT 'Tabla DBO_SQUAD.Localidad creada y poblada.';
+PRINT 'Tabla DB_SQUAD.Localidad creada y poblada.';
 												----------------------
 											-- MIGRACION DE DIRECCION --- LISTO
-INSERT INTO DBO_SQUAD.Direccion (direccion_nombre, direccion_localidad)
+INSERT INTO DB_SQUAD.Direccion (direccion_nombre, direccion_localidad)
 SELECT DISTINCT
     COALESCE(m.Sucursal_Direccion, m.Cliente_Direccion, m.Proveedor_Direccion) AS DireccionNombre,
     loc.localidad_codigo
 FROM gd_esquema.Maestra m
-JOIN DBO_SQUAD.Localidad loc ON COALESCE(m.Sucursal_Localidad, m.Cliente_Localidad, m.Proveedor_Localidad) = loc.localidad_nombre
-                                AND COALESCE(m.Sucursal_Provincia, m.Cliente_Provincia, m.Proveedor_Provincia) = (SELECT provincia_nombre FROM DBO_SQUAD.Provincia WHERE provincia_codigo = loc.localidad_provincia)
+JOIN DB_SQUAD.Localidad loc ON COALESCE(m.Sucursal_Localidad, m.Cliente_Localidad, m.Proveedor_Localidad) = loc.localidad_nombre
+                                AND COALESCE(m.Sucursal_Provincia, m.Cliente_Provincia, m.Proveedor_Provincia) = (SELECT provincia_nombre FROM DB_SQUAD.Provincia WHERE provincia_codigo = loc.localidad_provincia)
 WHERE COALESCE(m.Sucursal_Direccion, m.Cliente_Direccion, m.Proveedor_Direccion) IS NOT NULL;
-PRINT 'Tabla DBO_SQUAD.Direccion creada y poblada.';
+PRINT 'Tabla DB_SQUAD.Direccion creada y poblada.';
 
 											-----------------------
 										-- MIGRACION DE SUCURSAL-- LISTO
-INSERT INTO DBO_SQUAD.Sucursal (sucursal_numero_maestra, sucursal_direccion, sucursal_mail)
+INSERT INTO DB_SQUAD.Sucursal (sucursal_numero_maestra, sucursal_direccion, sucursal_mail)
 SELECT DISTINCT
     m.Sucursal_NroSucursal, 
     dir.direccion_codigo,
     m.Sucursal_Mail
 FROM gd_esquema.Maestra m
-JOIN DBO_SQUAD.Provincia prov ON UPPER(TRIM(m.Sucursal_Provincia)) = UPPER(TRIM(prov.provincia_nombre))
-JOIN DBO_SQUAD.Localidad loc ON UPPER(TRIM(m.Sucursal_Localidad)) = UPPER(TRIM(loc.localidad_nombre)) AND loc.localidad_provincia = prov.provincia_codigo
-JOIN DBO_SQUAD.Direccion dir ON UPPER(TRIM(m.Sucursal_Direccion)) = UPPER(TRIM(dir.direccion_nombre)) AND dir.direccion_localidad = loc.localidad_codigo
+JOIN DB_SQUAD.Provincia prov ON UPPER(TRIM(m.Sucursal_Provincia)) = UPPER(TRIM(prov.provincia_nombre))
+JOIN DB_SQUAD.Localidad loc ON UPPER(TRIM(m.Sucursal_Localidad)) = UPPER(TRIM(loc.localidad_nombre)) AND loc.localidad_provincia = prov.provincia_codigo
+JOIN DB_SQUAD.Direccion dir ON UPPER(TRIM(m.Sucursal_Direccion)) = UPPER(TRIM(dir.direccion_nombre)) AND dir.direccion_localidad = loc.localidad_codigo
 WHERE m.Sucursal_NroSucursal IS NOT NULL;
-PRINT 'Tabla DBO_SQUAD.Sucursal creada y poblada (con IDENTITY PK).';
+PRINT 'Tabla DB_SQUAD.Sucursal creada y poblada (con IDENTITY PK).';
 
 											-----------------------
 										-- MIGRACION DE ESTADO_PEDIDO-- LISTO
-INSERT INTO DBO_SQUAD.EstadoPedido (estado_id, estado_nombre)
+INSERT INTO DB_SQUAD.EstadoPedido (estado_id, estado_nombre)
 VALUES
 ('E', 'ENTREGADO'), -- Ejemplo
 ('X', 'CANCELADO'), -- Ejemplo
 ('N', 'NULL');
-PRINT 'Tabla DBO_SQUAD.EstadoPedido creada y poblada.';
+PRINT 'Tabla DB_SQUAD.EstadoPedido creada y poblada.';
 										-----------------------
 										-- MIGRACION DE MODELO -- LISTO
-INSERT INTO DBO_SQUAD.Modelo (modelo_codigo, modelo_descripcion, modelo_precio_base)
+INSERT INTO DB_SQUAD.Modelo (modelo_codigo, modelo_descripcion, modelo_precio_base)
 SELECT DISTINCT
     CAST(m.Sillon_Modelo_Codigo AS BIGINT), -- ¡USAMOS LA COLUMNA CORRECTA!
     LEFT(m.Sillon_Modelo_Descripcion, 100), 
@@ -331,10 +331,10 @@ WHERE
     m.Sillon_Modelo_Codigo IS NOT NULL
     AND m.Sillon_Modelo_Descripcion IS NOT NULL
     AND m.Sillon_Modelo_Precio IS NOT NULL;
-PRINT 'Tabla DBO_SQUAD.Modelo creada y poblada.';
+PRINT 'Tabla DB_SQUAD.Modelo creada y poblada.';
 											-----------------------
 										-- MIGRACION DE MEDIDA -- LISTO
-INSERT INTO DBO_SQUAD.Medida (medida_alto, medida_ancho, medida_profundidad, medida_precio)
+INSERT INTO DB_SQUAD.Medida (medida_alto, medida_ancho, medida_profundidad, medida_precio)
 SELECT DISTINCT
     Sillon_Medida_Alto,
     Sillon_Medida_Ancho,
@@ -346,17 +346,17 @@ WHERE
     OR Sillon_Medida_Ancho IS NOT NULL
     OR Sillon_Medida_Profundidad IS NOT NULL
     OR Sillon_Medida_Precio IS NOT NULL; 
-PRINT 'Tabla DBO_SQUAD.Medida creada y poblada con IDENTITY.';
+PRINT 'Tabla DB_SQUAD.Medida creada y poblada con IDENTITY.';
 										---------------------------
 										-- MIGRACION DE SILLON -- LISTO
-INSERT INTO DBO_SQUAD.Sillon (sillon_codigo_maestra, sillon_modelo, sillon_medidas)
+INSERT INTO DB_SQUAD.Sillon (sillon_codigo_maestra, sillon_modelo, sillon_medidas)
 SELECT DISTINCT
     CAST(m.Sillon_Codigo AS BIGINT),
     mod.modelo_codigo,
     med.medida_codigo
 FROM gd_esquema.Maestra m
-JOIN DBO_SQUAD.Modelo mod ON CAST(m.Sillon_Modelo_Codigo AS BIGINT) = mod.modelo_codigo
-JOIN DBO_SQUAD.Medida med ON CAST(m.Sillon_Medida_Alto AS DECIMAL(12,2)) = med.medida_alto
+JOIN DB_SQUAD.Modelo mod ON CAST(m.Sillon_Modelo_Codigo AS BIGINT) = mod.modelo_codigo
+JOIN DB_SQUAD.Medida med ON CAST(m.Sillon_Medida_Alto AS DECIMAL(12,2)) = med.medida_alto
                            AND CAST(m.Sillon_Medida_Ancho AS DECIMAL(12,2)) = med.medida_ancho
                            AND CAST(m.Sillon_Medida_Profundidad AS DECIMAL(12,2)) = med.medida_profundidad
                            AND CAST(m.Sillon_Medida_Precio AS DECIMAL(12,2)) = med.medida_precio
@@ -367,70 +367,70 @@ WHERE
     AND m.Sillon_Medida_Ancho IS NOT NULL
     AND m.Sillon_Medida_Profundidad IS NOT NULL
     AND m.Sillon_Medida_Precio IS NOT NULL;
-PRINT 'Tabla DBO_SQUAD.Sillon creada y poblada (con UNIQUE CONSTRAINT).'
+PRINT 'Tabla DB_SQUAD.Sillon creada y poblada (con UNIQUE CONSTRAINT).'
 										---------------------------
 										-- MIGRACION DE MATERIAL -- LISTO
--- 1.5 DBO_SQUAD.Material -- listo
-INSERT INTO DBO_SQUAD.Material (material_precio, material_descripcion)
+-- 1.5 DB_SQUAD.Material -- listo
+INSERT INTO DB_SQUAD.Material (material_precio, material_descripcion)
 SELECT DISTINCT
     m.Material_Precio,
     COALESCE(m.Material_Descripcion, m.Material_Nombre)
 FROM gd_esquema.Maestra m
 WHERE
     COALESCE(m.Material_Descripcion, m.Material_Nombre) IS NOT NULL;
-PRINT 'Tabla DBO_SQUAD.Material creada y poblada con IDENTITY.';
+PRINT 'Tabla DB_SQUAD.Material creada y poblada con IDENTITY.';
 										---------------------------
 										-- RELLENO -- LISTO
-INSERT INTO DBO_SQUAD.Relleno (relleno_material, relleno_densidad)
+INSERT INTO DB_SQUAD.Relleno (relleno_material, relleno_densidad)
 SELECT DISTINCT
     mat.material_codigo,
     m.Relleno_Densidad
 FROM gd_esquema.Maestra m
-JOIN DBO_SQUAD.Material mat ON COALESCE(m.Material_Descripcion, m.Material_Nombre) = mat.material_descripcion
+JOIN DB_SQUAD.Material mat ON COALESCE(m.Material_Descripcion, m.Material_Nombre) = mat.material_descripcion
 WHERE m.Material_Tipo = 'Relleno' -- Filtrar por tipo de material
   AND m.Relleno_Densidad IS NOT NULL;
-PRINT 'Tabla DBO_SQUAD.Relleno creada y poblada.';
+PRINT 'Tabla DB_SQUAD.Relleno creada y poblada.';
 										---------------------------
 										--MIGRACION DE MADERA -- LISTO
-INSERT INTO DBO_SQUAD.Madera (madera_material, madera_tipo, madera_dureza)
+INSERT INTO DB_SQUAD.Madera (madera_material, madera_tipo, madera_dureza)
 SELECT DISTINCT
     mat.material_codigo,
     m.Madera_Color,
     m.Madera_Dureza
 FROM gd_esquema.Maestra m
-JOIN DBO_SQUAD.Material mat ON COALESCE(m.Material_Descripcion, m.Material_Nombre) = mat.material_descripcion
+JOIN DB_SQUAD.Material mat ON COALESCE(m.Material_Descripcion, m.Material_Nombre) = mat.material_descripcion
 WHERE m.Material_Tipo = 'Madera'; -- Filtrar por tipo de material
-PRINT 'Tabla DBO_SQUAD.Madera creada y poblada.';
+PRINT 'Tabla DB_SQUAD.Madera creada y poblada.';
 										----------------------------
 										--MIGRACION DE TELA-- LISTO
-INSERT INTO DBO_SQUAD.Tela (tela_material, tela_color, tela_textura)
+INSERT INTO DB_SQUAD.Tela (tela_material, tela_color, tela_textura)
 SELECT DISTINCT
     mat.material_codigo,
     m.Tela_Color,
     m.Tela_Textura
 FROM gd_esquema.Maestra m
-JOIN DBO_SQUAD.Material mat ON COALESCE(m.Material_Descripcion, m.Material_Nombre) = mat.material_descripcion
+JOIN DB_SQUAD.Material mat ON COALESCE(m.Material_Descripcion, m.Material_Nombre) = mat.material_descripcion
 WHERE m.Material_Tipo = 'Tela'; -- Filtrar por tipo de material
-PRINT 'Tabla DBO_SQUAD.Tela creada y poblada.';
+PRINT 'Tabla DB_SQUAD.Tela creada y poblada.';
 								----------------------------
 										--MIGRACION ITEM MATERIAL-- LISTO
 
-INSERT INTO DBO_SQUAD.ItemMaterial (item_material_sillon, item_material_material)
+INSERT INTO DB_SQUAD.ItemMaterial (item_material_sillon, item_material_material)
 SELECT DISTINCT
     s.sillon_id AS ItemMaterialSillon,
     mat.material_codigo AS ItemMaterialMaterial
 FROM gd_esquema.Maestra m
--- JOIN a DBO_SQUAD.Sillon para obtener el sillon_id
-JOIN DBO_SQUAD.Sillon s ON CAST(m.Sillon_Codigo AS BIGINT) = s.sillon_codigo_maestra
+-- JOIN a DB_SQUAD.Sillon para obtener el sillon_id
+JOIN DB_SQUAD.Sillon s ON CAST(m.Sillon_Codigo AS BIGINT) = s.sillon_codigo_maestra
                          AND CAST(m.Sillon_Modelo_Codigo AS BIGINT) = s.sillon_modelo
-                         AND s.sillon_medidas = (SELECT medida_codigo FROM DBO_SQUAD.Medida WHERE
+                         AND s.sillon_medidas = (SELECT medida_codigo FROM DB_SQUAD.Medida WHERE
                                                 medida_alto = CAST(m.Sillon_Medida_Alto AS DECIMAL(12,2))
                                             AND medida_ancho = CAST(m.Sillon_Medida_Ancho AS DECIMAL(12,2))
                                             AND medida_profundidad = CAST(m.Sillon_Medida_Profundidad AS DECIMAL(12,2))
                                             AND medida_precio = CAST(m.Sillon_Medida_Precio AS DECIMAL(12,2))
                                             )
--- JOIN a DBO_SQUAD.Material para obtener el material_codigo genérico
-JOIN DBO_SQUAD.Material mat ON CAST(m.Material_Precio AS DECIMAL(12,2)) = mat.material_precio
+-- JOIN a DB_SQUAD.Material para obtener el material_codigo genérico
+JOIN DB_SQUAD.Material mat ON CAST(m.Material_Precio AS DECIMAL(12,2)) = mat.material_precio
                             AND LEFT(m.Material_Descripcion, 50) = mat.material_descripcion
 WHERE
     m.Sillon_Codigo IS NOT NULL
@@ -441,12 +441,12 @@ WHERE
     AND m.Sillon_Medida_Ancho IS NOT NULL
     AND m.Sillon_Medida_Profundidad IS NOT NULL
     AND m.Sillon_Medida_Precio IS NOT NULL;
-PRINT 'Tabla DBO_SQUAD.ItemMaterial creada y poblada.';
+PRINT 'Tabla DB_SQUAD.ItemMaterial creada y poblada.';
 
 
 										------------------------------
 										-- MIGRACION DE CLIENTE -- LISTO
-INSERT INTO DBO_SQUAD.Cliente (Cliente_Dni, Cliente_Nombre, Cliente_Apellido, Cliente_FechaNacimiento, Cliente_Mail, Cliente_Direccion, Cliente_Telefono, Cliente_Provincia, Cliente_Localidad)
+INSERT INTO DB_SQUAD.Cliente (Cliente_Dni, Cliente_Nombre, Cliente_Apellido, Cliente_FechaNacimiento, Cliente_Mail, Cliente_Direccion, Cliente_Telefono, Cliente_Provincia, Cliente_Localidad)
 SELECT
     Cliente_Dni_Final, -- Usamos el nombre de la columna generada en el CTE intermedio
     Cliente_Nombre,
@@ -498,7 +498,7 @@ WHERE rn = 1; -- Filtramos para obtener solo la primera ocurrencia única de cad
 											
 											------------------------------
 													-- MIGRO PEDIDO--
-INSERT INTO DBO_SQUAD.Pedido (pedido_codigo, pedido_sucursal, pedido_cliente, pedido_fecha, pedido_total, pedido_estado)
+INSERT INTO DB_SQUAD.Pedido (pedido_codigo, pedido_sucursal, pedido_cliente, pedido_fecha, pedido_total, pedido_estado)
 SELECT DISTINCT
     CAST(m.Pedido_Numero AS BIGINT),
     suc.sucursal_id,
@@ -518,36 +518,36 @@ JOIN (
         ISNULL(Cliente_Dni, 'NULL_DNI_' + CAST(Cliente_ID AS NVARCHAR(20))) AS Cliente_Dni_UniqueKey,
         ISNULL(Cliente_Nombre, 'NULL_NOMBRE_' + CAST(Cliente_ID AS NVARCHAR(20))) AS Cliente_Nombre_UniqueKey,
         ISNULL(Cliente_Apellido, 'NULL_APELLIDO_' + CAST(Cliente_ID AS NVARCHAR(20))) AS Cliente_Apellido_UniqueKey
-    FROM DBO_SQUAD.Cliente
+    FROM DB_SQUAD.Cliente
 ) AS cli ON
     ISNULL(CAST(m.Cliente_Dni AS NVARCHAR(20)), 'NULL_DNI_' + CAST(m.GlobalRowNumMaestra AS NVARCHAR(20))) = cli.Cliente_Dni_UniqueKey
     AND ISNULL(m.Cliente_Nombre, 'NULL_NOMBRE_' + CAST(m.GlobalRowNumMaestra AS NVARCHAR(20))) = cli.Cliente_Nombre_UniqueKey
     AND ISNULL(m.Cliente_Apellido, 'NULL_APELLIDO_' + CAST(m.GlobalRowNumMaestra AS NVARCHAR(20))) = cli.Cliente_Apellido_UniqueKey
-JOIN DBO_SQUAD.EstadoPedido ep ON UPPER(TRIM(m.Pedido_Estado)) = UPPER(TRIM(ep.estado_nombre))
-JOIN DBO_SQUAD.Provincia prov ON UPPER(TRIM(m.Sucursal_Provincia)) = UPPER(TRIM(prov.provincia_nombre))
-JOIN DBO_SQUAD.Localidad loc ON UPPER(TRIM(m.Sucursal_Localidad)) = UPPER(TRIM(loc.localidad_nombre)) AND loc.localidad_provincia = prov.provincia_codigo
-JOIN DBO_SQUAD.Direccion dir ON UPPER(TRIM(m.Sucursal_Direccion)) = UPPER(TRIM(dir.direccion_nombre)) AND dir.direccion_localidad = loc.localidad_codigo
-JOIN DBO_SQUAD.Sucursal suc ON suc.sucursal_numero_maestra = m.Sucursal_NroSucursal
+JOIN DB_SQUAD.EstadoPedido ep ON UPPER(TRIM(m.Pedido_Estado)) = UPPER(TRIM(ep.estado_nombre))
+JOIN DB_SQUAD.Provincia prov ON UPPER(TRIM(m.Sucursal_Provincia)) = UPPER(TRIM(prov.provincia_nombre))
+JOIN DB_SQUAD.Localidad loc ON UPPER(TRIM(m.Sucursal_Localidad)) = UPPER(TRIM(loc.localidad_nombre)) AND loc.localidad_provincia = prov.provincia_codigo
+JOIN DB_SQUAD.Direccion dir ON UPPER(TRIM(m.Sucursal_Direccion)) = UPPER(TRIM(dir.direccion_nombre)) AND dir.direccion_localidad = loc.localidad_codigo
+JOIN DB_SQUAD.Sucursal suc ON suc.sucursal_numero_maestra = m.Sucursal_NroSucursal
                              AND suc.sucursal_direccion = dir.direccion_codigo
                              AND suc.sucursal_mail = m.Sucursal_Mail
 WHERE m.Pedido_Numero IS NOT NULL
   AND m.Cliente_Dni IS NOT NULL
   AND m.Pedido_Estado IS NOT NULL 
   AND m.Sucursal_NroSucursal IS NOT NULL;
-PRINT 'Tabla DBO_SQUAD.Pedido creada y poblada.';
+PRINT 'Tabla DB_SQUAD.Pedido creada y poblada.';
 										------------------------------
 													-- MIGRO ItemPedido--
-INSERT INTO DBO_SQUAD.ItemPedido (item_pedido_codigo, item_pedido_sillon, item_pedido_cantidad)
+INSERT INTO DB_SQUAD.ItemPedido (item_pedido_codigo, item_pedido_sillon, item_pedido_cantidad)
 SELECT DISTINCT
     CAST(m.Pedido_Numero AS BIGINT),
     s.sillon_id, -- Obtenemos el sillon_id
     CAST(m.Detalle_Pedido_Cantidad AS INT)
 FROM gd_esquema.Maestra m
-JOIN DBO_SQUAD.Pedido p ON CAST(m.Pedido_Numero AS BIGINT) = p.pedido_codigo
+JOIN DB_SQUAD.Pedido p ON CAST(m.Pedido_Numero AS BIGINT) = p.pedido_codigo
 
-JOIN DBO_SQUAD.Sillon s ON CAST(m.Sillon_Codigo AS BIGINT) = s.sillon_codigo_maestra
+JOIN DB_SQUAD.Sillon s ON CAST(m.Sillon_Codigo AS BIGINT) = s.sillon_codigo_maestra
                          AND CAST(m.Sillon_Modelo_Codigo AS BIGINT) = s.sillon_modelo
-                         AND s.sillon_medidas = (SELECT medida_codigo FROM DBO_SQUAD.Medida WHERE
+                         AND s.sillon_medidas = (SELECT medida_codigo FROM DB_SQUAD.Medida WHERE
                                                 medida_alto = CAST(m.Sillon_Medida_Alto AS DECIMAL(12,2))
                                             AND medida_ancho = CAST(m.Sillon_Medida_Ancho AS DECIMAL(12,2))
                                             AND medida_profundidad = CAST(m.Sillon_Medida_Profundidad AS DECIMAL(12,2))
@@ -562,12 +562,12 @@ WHERE
     AND m.Sillon_Medida_Ancho IS NOT NULL
     AND m.Sillon_Medida_Profundidad IS NOT NULL
     AND m.Sillon_Medida_Precio IS NOT NULL;
-PRINT 'Tabla DBO_SQUAD.ItemPedido creada y poblada.';
+PRINT 'Tabla DB_SQUAD.ItemPedido creada y poblada.';
 
 											------------------------------
 													-- MIGRO PROVEEDOR--
 
-INSERT INTO DBO_SQUAD.Proveedor (
+INSERT INTO DB_SQUAD.Proveedor (
     proveedor_cuit,
     proveedor_razon_social,
     proveedor_telefono,
@@ -588,21 +588,21 @@ SELECT DISTINCT
 FROM
     gd_esquema.Maestra m
 
-LEFT JOIN DBO_SQUAD.Provincia prov
+LEFT JOIN DB_SQUAD.Provincia prov
     ON UPPER(TRIM(m.Proveedor_Provincia)) = UPPER(TRIM(prov.provincia_nombre))
 
-LEFT JOIN DBO_SQUAD.Localidad loc
+LEFT JOIN DB_SQUAD.Localidad loc
     ON UPPER(TRIM(m.Proveedor_Localidad)) = UPPER(TRIM(loc.localidad_nombre))
     AND loc.localidad_provincia = prov.provincia_codigo 
 WHERE
     m.Proveedor_Cuit IS NOT NULL; 
 
-PRINT 'Tabla DBO_SQUAD.Proveedor creada y poblada.';
+PRINT 'Tabla DB_SQUAD.Proveedor creada y poblada.';
 									------------------------------
 											-- MIGRO COMPRA--
 
 
-INSERT INTO DBO_SQUAD.Compra (compra_codigo, compra_fecha, compra_proveedor, compra_total)
+INSERT INTO DB_SQUAD.Compra (compra_codigo, compra_fecha, compra_proveedor, compra_total)
 SELECT DISTINCT
     CAST(m.Compra_Numero AS BIGINT),
     CAST(m.Compra_Fecha AS DATETIME),
@@ -611,7 +611,7 @@ SELECT DISTINCT
 FROM
     gd_esquema.Maestra m
 
-LEFT JOIN DBO_SQUAD.Proveedor pr
+LEFT JOIN DB_SQUAD.Proveedor pr
     ON LEFT(m.Proveedor_Cuit, 20) = pr.proveedor_cuit
     AND LEFT(m.Proveedor_RazonSocial, 255) = pr.proveedor_razon_social
     AND LEFT(m.Proveedor_Telefono, 50) = pr.proveedor_telefono
@@ -619,23 +619,23 @@ LEFT JOIN DBO_SQUAD.Proveedor pr
 
     AND pr.proveedor_localidad = (
         SELECT localidad_codigo
-        FROM DBO_SQUAD.Localidad l
-        JOIN DBO_SQUAD.Provincia p ON l.localidad_provincia = p.provincia_codigo
+        FROM DB_SQUAD.Localidad l
+        JOIN DB_SQUAD.Provincia p ON l.localidad_provincia = p.provincia_codigo
         WHERE UPPER(TRIM(l.localidad_nombre)) = UPPER(TRIM(m.Proveedor_Localidad))
           AND UPPER(TRIM(p.provincia_nombre)) = UPPER(TRIM(m.Proveedor_Provincia))
     )
     AND pr.proveedor_provincia = (
         SELECT provincia_codigo
-        FROM DBO_SQUAD.Provincia
+        FROM DB_SQUAD.Provincia
         WHERE UPPER(TRIM(provincia_nombre)) = UPPER(TRIM(m.Proveedor_Provincia))
     )
 WHERE
     m.Compra_Numero IS NOT NULL; 
-PRINT 'Tabla DBO_SQUAD.Compra creada y poblada.';
+PRINT 'Tabla DB_SQUAD.Compra creada y poblada.';
 												------------------------------
 													-- MIGRO ITEMCOMPRA--
 
-INSERT INTO DBO_SQUAD.ItemCompra (item_compra_codigo, item_compra_sillon, item_compra_cantidad, item_compra_precio_unitario, item_compra_subtotal)
+INSERT INTO DB_SQUAD.ItemCompra (item_compra_codigo, item_compra_sillon, item_compra_cantidad, item_compra_precio_unitario, item_compra_subtotal)
 SELECT DISTINCT
     CAST(m.Compra_Numero AS BIGINT),
     NULL AS item_compra_sillon, -- Siempre será NULL, porque no hay datos de sillón para vincular
@@ -650,12 +650,12 @@ WHERE
     AND m.Detalle_Compra_Precio IS NOT NULL 
     AND m.Detalle_Compra_SubTotal IS NOT NULL; 
 
-PRINT 'Tabla DBO_SQUAD.ItemCompra creada y poblada (sin vinculación a Sillón).';
+PRINT 'Tabla DB_SQUAD.ItemCompra creada y poblada (sin vinculación a Sillón).';
 												------------------------------
 													-- MIGRO FACTURA--
 
 
-INSERT INTO DBO_SQUAD.Factura (factura_codigo, fact_fecha, fact_total)
+INSERT INTO DB_SQUAD.Factura (factura_codigo, fact_fecha, fact_total)
 SELECT DISTINCT
     CAST(m.Factura_Numero AS BIGINT),
     CAST(m.Factura_Fecha AS DATETIME2(6)),
@@ -664,12 +664,12 @@ FROM
     gd_esquema.Maestra m
 WHERE
     m.Factura_Numero IS NOT NULL; -- Solo facturas con número
-PRINT 'Tabla DBO_SQUAD.Factura creada y poblada.';
+PRINT 'Tabla DB_SQUAD.Factura creada y poblada.';
 											------------------------------
 													-- MIGRO ENVIO--
 	
 
-INSERT INTO DBO_SQUAD.Envio (envio_codigo, envio_factura, envio_fecha_programada, envio_fecha_entrega, envio_importe_traslado, envio_importe_subida, envio_total)
+INSERT INTO DB_SQUAD.Envio (envio_codigo, envio_factura, envio_fecha_programada, envio_fecha_entrega, envio_importe_traslado, envio_importe_subida, envio_total)
 SELECT DISTINCT
     CAST(m.Envio_Numero AS DECIMAL(18,0)),
     CAST(m.Factura_Numero AS BIGINT), -- Vincula a la Factura
@@ -682,12 +682,12 @@ FROM
     gd_esquema.Maestra m
 WHERE
     m.Envio_Numero IS NOT NULL; -- Solo si hay un número de envío
-PRINT 'Tabla DBO_SQUAD.Envio creada y poblada.';
+PRINT 'Tabla DB_SQUAD.Envio creada y poblada.';
 
 												------------------------------
 													-- MIGRO ITEMFACTURA--
 
-INSERT INTO DBO_SQUAD.ItemFactura (item_fact_codigo, item_fact_sillon, item_fact_precio, item_fact_cantidad, item_fact_subtotal)
+INSERT INTO DB_SQUAD.ItemFactura (item_fact_codigo, item_fact_sillon, item_fact_precio, item_fact_cantidad, item_fact_subtotal)
 SELECT DISTINCT
     CAST(m.Factura_Numero AS BIGINT),
     NULL AS item_fact_sillon, -- Siempre NULL si no hay datos de sillón en la Maestra para facturas
@@ -701,5 +701,5 @@ WHERE
     AND (m.Detalle_Factura_Cantidad IS NOT NULL -- Al menos uno de estos campos debe tener un valor
          OR m.Detalle_Factura_Precio IS NOT NULL
          OR m.Detalle_Factura_SubTotal IS NOT NULL);
-PRINT 'Tabla DBO_SQUAD.ItemFactura creada y poblada.';
+PRINT 'Tabla DB_SQUAD.ItemFactura creada y poblada.';
 
