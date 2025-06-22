@@ -1,0 +1,723 @@
+USE GD1C2025;
+GO
+
+PRINT '---------------------------------------------------';
+PRINT 'Iniciando limpieza de tablas y vistas de BI existentes.';
+PRINT '---------------------------------------------------';
+
+IF OBJECT_ID('DB_SQUAD.BI_GananciasPorMesSucursal', 'V') IS NOT NULL DROP VIEW DB_SQUAD.BI_GananciasPorMesSucursal;
+IF OBJECT_ID('DB_SQUAD.BI_FacturaPromedioMensualPorProvinciaCuatrimestre', 'V') IS NOT NULL DROP VIEW DB_SQUAD.BI_FacturaPromedioMensualPorProvinciaCuatrimestre;
+IF OBJECT_ID('DB_SQUAD.BI_RendimientoModelosTop3', 'V') IS NOT NULL DROP VIEW DB_SQUAD.BI_RendimientoModelosTop3;
+IF OBJECT_ID('DB_SQUAD.BI_VolumenPedidosPorTurnoSucursalMes', 'V') IS NOT NULL DROP VIEW DB_SQUAD.BI_VolumenPedidosPorTurnoSucursalMes;
+IF OBJECT_ID('DB_SQUAD.BI_ConversionPedidosPorEstadoCuatrimestreSucursal', 'V') IS NOT NULL DROP VIEW DB_SQUAD.BI_ConversionPedidosPorEstadoCuatrimestreSucursal;
+IF OBJECT_ID('DB_SQUAD.BI_TiempoPromedioFabricacionPorCuatrimestre', 'V') IS NOT NULL DROP VIEW DB_SQUAD.BI_TiempoPromedioFabricacionPorCuatrimestre;
+IF OBJECT_ID('DB_SQUAD.BI_PromedioComprasPorMes', 'V') IS NOT NULL DROP VIEW DB_SQUAD.BI_PromedioComprasPorMes;
+IF OBJECT_ID('DB_SQUAD.BI_ComprasPorTipoMaterialSucursalCuatrimestre', 'V') IS NOT NULL DROP VIEW DB_SQUAD.BI_ComprasPorTipoMaterialSucursalCuatrimestre;
+IF OBJECT_ID('DB_SQUAD.BI_PorcentajeCumplimientoEnvios', 'V') IS NOT NULL DROP VIEW DB_SQUAD.BI_PorcentajeCumplimientoEnvios;
+IF OBJECT_ID('DB_SQUAD.BI_LocalidadesMayorCostoEnvio', 'V') IS NOT NULL DROP VIEW DB_SQUAD.BI_LocalidadesMayorCostoEnvio;
+
+PRINT 'Vistas de BI eliminadas si existían.';
+GO
+
+IF OBJECT_ID('DB_SQUAD.BI_FactVentasComprasEnvios', 'U') IS NOT NULL DROP TABLE DB_SQUAD.BI_FactVentasComprasEnvios;
+IF OBJECT_ID('DB_SQUAD.BI_Tiempo', 'U') IS NOT NULL DROP TABLE DB_SQUAD.BI_Tiempo;
+IF OBJECT_ID('DB_SQUAD.BI_Ubicacion', 'U') IS NOT NULL DROP TABLE DB_SQUAD.BI_Ubicacion;
+IF OBJECT_ID('DB_SQUAD.BI_RangoEtario', 'U') IS NOT NULL DROP TABLE DB_SQUAD.BI_RangoEtario;
+IF OBJECT_ID('DB_SQUAD.BI_TurnoVentas', 'U') IS NOT NULL DROP TABLE DB_SQUAD.BI_TurnoVentas;
+IF OBJECT_ID('DB_SQUAD.BI_TipoMaterial', 'U') IS NOT NULL DROP TABLE DB_SQUAD.BI_TipoMaterial;
+IF OBJECT_ID('DB_SQUAD.BI_ModeloSillon', 'U') IS NOT NULL DROP TABLE DB_SQUAD.BI_ModeloSillon;
+IF OBJECT_ID('DB_SQUAD.BI_EstadoPedido', 'U') IS NOT NULL DROP TABLE DB_SQUAD.BI_EstadoPedido;
+IF OBJECT_ID('DB_SQUAD.BI_Sucursal', 'U') IS NOT NULL DROP TABLE DB_SQUAD.BI_Sucursal;
+IF OBJECT_ID('DB_SQUAD.BI_Cliente', 'U') IS NOT NULL DROP TABLE DB_SQUAD.BI_Cliente;
+IF OBJECT_ID('DB_SQUAD.BI_Proveedor', 'U') IS NOT NULL DROP TABLE DB_SQUAD.BI_Proveedor;
+
+PRINT 'Tablas de BI eliminadas si existían.';
+PRINT '---------------------------------------------------';
+PRINT 'Comenzando la creación de tablas y vistas de BI.';
+PRINT '---------------------------------------------------';
+GO
+
+CREATE TABLE DB_SQUAD.BI_Tiempo (
+    tiempo_id INT IDENTITY(1,1) PRIMARY KEY,
+    anio INT NOT NULL,
+    cuatrimestre INT NOT NULL,
+    mes INT NOT NULL,
+    CONSTRAINT UQ_BI_Tiempo UNIQUE (anio, mes)
+);
+PRINT 'Tabla DB_SQUAD.BI_Tiempo creada.';
+GO
+
+CREATE TABLE DB_SQUAD.BI_Ubicacion (
+    ubicacion_id INT IDENTITY(1,1) PRIMARY KEY,
+    provincia_nombre NVARCHAR(255) NOT NULL,
+    localidad_nombre NVARCHAR(255) NOT NULL,
+    CONSTRAINT UQ_BI_Ubicacion UNIQUE (provincia_nombre, localidad_nombre)
+);
+PRINT 'Tabla DB_SQUAD.BI_Ubicacion creada.';
+GO
+
+CREATE TABLE DB_SQUAD.BI_RangoEtario (
+    rango_etario_id INT IDENTITY(1,1) PRIMARY KEY,
+    rango_etario_descripcion VARCHAR(10) NOT NULL UNIQUE
+);
+PRINT 'Tabla DB_SQUAD.BI_RangoEtario creada.';
+GO
+
+CREATE TABLE DB_SQUAD.BI_TurnoVentas (
+    turno_id INT IDENTITY(1,1) PRIMARY KEY,
+    turno_descripcion VARCHAR(20) NOT NULL UNIQUE
+);
+PRINT 'Tabla DB_SQUAD.BI_TurnoVentas creada.';
+GO
+
+CREATE TABLE DB_SQUAD.BI_TipoMaterial (
+    tipo_material_id INT IDENTITY(1,1) PRIMARY KEY,
+    tipo_material_descripcion NVARCHAR(50) NOT NULL UNIQUE
+);
+PRINT 'Tabla DB_SQUAD.BI_TipoMaterial creada.';
+GO
+
+CREATE TABLE DB_SQUAD.BI_ModeloSillon (
+    modelo_id BIGINT PRIMARY KEY,
+    modelo_descripcion NVARCHAR(100),
+    modelo_precio_base DECIMAL(12,2)
+);
+PRINT 'Tabla DB_SQUAD.BI_ModeloSillon creada.';
+GO
+
+CREATE TABLE DB_SQUAD.BI_EstadoPedido (
+    estado_id CHAR(1) PRIMARY KEY,
+    estado_nombre VARCHAR(10) NOT NULL UNIQUE
+);
+PRINT 'Tabla DB_SQUAD.BI_EstadoPedido creada.';
+GO
+
+CREATE TABLE DB_SQUAD.BI_Sucursal (
+    sucursal_bi_id INT IDENTITY(1,1) PRIMARY KEY,
+    sucursal_id_transaccional INT NOT NULL UNIQUE, 
+    sucursal_numero_maestra BIGINT NULL,
+    sucursal_mail NVARCHAR(50) NULL,
+    sucursal_direccion_nombre NVARCHAR(255) NULL,
+    sucursal_localidad_nombre NVARCHAR(255) NULL,
+    sucursal_provincia_nombre NVARCHAR(255) NULL
+);
+PRINT 'Tabla DB_SQUAD.BI_Sucursal creada.';
+GO
+
+CREATE TABLE DB_SQUAD.BI_Cliente (
+    cliente_bi_id INT IDENTITY(1,1) PRIMARY KEY,
+    cliente_id_transaccional INT NOT NULL UNIQUE, 
+    cliente_dni NVARCHAR(20) NULL,
+    cliente_nombre_completo NVARCHAR(511) NULL,
+    cliente_rango_etario_id INT, 
+    FOREIGN KEY (cliente_rango_etario_id) REFERENCES DB_SQUAD.BI_RangoEtario(rango_etario_id)
+);
+PRINT 'Tabla DB_SQUAD.BI_Cliente creada.';
+GO
+
+CREATE TABLE DB_SQUAD.BI_Proveedor (
+    proveedor_bi_id INT IDENTITY(1,1) PRIMARY KEY,
+    proveedor_id_transaccional INT NOT NULL UNIQUE, 
+    proveedor_cuit NVARCHAR(20) NOT NULL,
+    proveedor_razon_social NVARCHAR(255) NULL
+);
+PRINT 'Tabla DB_SQUAD.BI_Proveedor creada.';
+GO
+
+CREATE TABLE DB_SQUAD.BI_FactVentasComprasEnvios (
+    fact_id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    
+    tiempo_id INT NOT NULL,
+    ubicacion_sucursal_id INT NULL,
+    ubicacion_cliente_id INT NULL, 
+    ubicacion_proveedor_id INT NULL,
+    rango_etario_cliente_id INT NULL,
+    turno_ventas_id INT NULL,
+    tipo_material_id INT NULL, 
+    modelo_sillon_id BIGINT NULL,
+    estado_pedido_id CHAR(1) NULL,
+    sucursal_id INT NULL, 
+    cliente_id INT NULL,  
+    proveedor_id INT NULL, 
+
+    ingresos_factura DECIMAL(18,2) NULL,
+    cantidad_facturas INT NULL,
+    cantidad_pedidos INT NULL,
+    cantidad_items_pedido INT NULL,
+    
+
+    egresos_compra DECIMAL(12,2) NULL,
+    cantidad_items_compra INT NULL,
+    precio_unitario_item_compra DECIMAL(12,2) NULL,
+    subtotal_item_compra DECIMAL(12,2) NULL,
+
+    importe_envio_traslado DECIMAL(18,2) NULL,
+    importe_envio_subida DECIMAL(18,2) NULL,
+    total_envio DECIMAL(18,2) NULL,
+    envio_cumplido BIT NULL,
+
+    fecha_pedido DATETIME NULL,
+    fecha_factura DATETIME2(6) NULL,
+    fecha_compra DATETIME NULL,
+    fecha_envio_programada DATETIME2(6) NULL,
+    fecha_envio_entrega DATETIME2(6) NULL,
+
+    FOREIGN KEY (tiempo_id) REFERENCES DB_SQUAD.BI_Tiempo(tiempo_id),
+    FOREIGN KEY (ubicacion_sucursal_id) REFERENCES DB_SQUAD.BI_Ubicacion(ubicacion_id),
+    FOREIGN KEY (ubicacion_cliente_id) REFERENCES DB_SQUAD.BI_Ubicacion(ubicacion_id),
+    FOREIGN KEY (ubicacion_proveedor_id) REFERENCES DB_SQUAD.BI_Ubicacion(ubicacion_id),
+    FOREIGN KEY (rango_etario_cliente_id) REFERENCES DB_SQUAD.BI_RangoEtario(rango_etario_id),
+    FOREIGN KEY (turno_ventas_id) REFERENCES DB_SQUAD.BI_TurnoVentas(turno_id),
+    FOREIGN KEY (tipo_material_id) REFERENCES DB_SQUAD.BI_TipoMaterial(tipo_material_id),
+    FOREIGN KEY (modelo_sillon_id) REFERENCES DB_SQUAD.BI_ModeloSillon(modelo_id),
+    FOREIGN KEY (estado_pedido_id) REFERENCES DB_SQUAD.BI_EstadoPedido(estado_id),
+    FOREIGN KEY (sucursal_id) REFERENCES DB_SQUAD.BI_Sucursal(sucursal_bi_id),
+    FOREIGN KEY (cliente_id) REFERENCES DB_SQUAD.BI_Cliente(cliente_bi_id),
+    FOREIGN KEY (proveedor_id) REFERENCES DB_SQUAD.BI_Proveedor(proveedor_bi_id)
+);
+PRINT 'Tabla DB_SQUAD.BI_FactVentasComprasEnvios creada.';
+GO
+
+PRINT '---------------------------------------------------';
+PRINT 'Comenzando la migración de datos a las tablas de BI.';
+PRINT '---------------------------------------------------';
+
+INSERT INTO DB_SQUAD.BI_Tiempo (anio, cuatrimestre, mes)
+SELECT DISTINCT
+    YEAR(Fecha) AS anio,
+    CEILING(MONTH(Fecha) / 3.0) AS cuatrimestre,
+    MONTH(Fecha) AS mes
+FROM (
+    SELECT fact_fecha AS Fecha FROM DB_SQUAD.Factura WHERE fact_fecha IS NOT NULL
+    UNION ALL
+    SELECT pedido_fecha AS Fecha FROM DB_SQUAD.Pedido WHERE pedido_fecha IS NOT NULL
+    UNION ALL
+    SELECT compra_fecha AS Fecha FROM DB_SQUAD.Compra WHERE compra_fecha IS NOT NULL
+    UNION ALL
+    SELECT envio_fecha_programada AS Fecha FROM DB_SQUAD.Envio WHERE envio_fecha_programada IS NOT NULL
+    UNION ALL
+    SELECT envio_fecha_entrega AS Fecha FROM DB_SQUAD.Envio WHERE envio_fecha_entrega IS NOT NULL
+) AS FechasUnicas
+WHERE Fecha IS NOT NULL;
+PRINT 'Datos migrados a DB_SQUAD.BI_Tiempo.';
+GO
+
+INSERT INTO DB_SQUAD.BI_Ubicacion (provincia_nombre, localidad_nombre)
+SELECT DISTINCT
+    p.provincia_nombre,
+    l.localidad_nombre
+FROM DB_SQUAD.Localidad l
+JOIN DB_SQUAD.Provincia p ON l.localidad_provincia = p.provincia_codigo;
+PRINT 'Datos migrados a DB_SQUAD.BI_Ubicacion.';
+GO
+
+INSERT INTO DB_SQUAD.BI_RangoEtario (rango_etario_descripcion) VALUES
+('<25'),
+('25-35'),
+('35-50'),
+('>50');
+PRINT 'Datos migrados a DB_SQUAD.BI_RangoEtario.';
+GO
+
+INSERT INTO DB_SQUAD.BI_TurnoVentas (turno_descripcion) VALUES
+('08:00-14:00'),
+('14:00-20:00');
+PRINT 'Datos migrados a DB_SQUAD.BI_TurnoVentas.';
+GO
+
+INSERT INTO DB_SQUAD.BI_TipoMaterial (tipo_material_descripcion) VALUES
+('Tela'),
+('Madera'),
+('Relleno');
+PRINT 'Datos migrados a DB_SQUAD.BI_TipoMaterial.';
+GO
+
+INSERT INTO DB_SQUAD.BI_ModeloSillon (modelo_id, modelo_descripcion, modelo_precio_base)
+SELECT modelo_codigo, modelo_descripcion, modelo_precio_base
+FROM DB_SQUAD.Modelo;
+PRINT 'Datos migrados a DB_SQUAD.BI_ModeloSillon.';
+GO
+
+INSERT INTO DB_SQUAD.BI_EstadoPedido (estado_id, estado_nombre)
+SELECT estado_id, estado_nombre
+FROM DB_SQUAD.EstadoPedido;
+PRINT 'Datos migrados a DB_SQUAD.BI_EstadoPedido.';
+GO
+GO
+
+INSERT INTO DB_SQUAD.BI_Cliente (cliente_id_transaccional, cliente_dni, cliente_nombre_completo, cliente_rango_etario_id)
+SELECT
+    c.Cliente_ID,
+    c.Cliente_Dni,
+    c.Cliente_Nombre + ' ' + c.Cliente_Apellido,
+    CASE
+        WHEN DATEDIFF(year, c.Cliente_FechaNacimiento, GETDATE()) < 25 THEN (SELECT rango_etario_id FROM DB_SQUAD.BI_RangoEtario WHERE rango_etario_descripcion = '<25')
+        WHEN DATEDIFF(year, c.Cliente_FechaNacimiento, GETDATE()) BETWEEN 25 AND 35 THEN (SELECT rango_etario_id FROM DB_SQUAD.BI_RangoEtario WHERE rango_etario_descripcion = '25-35')
+        WHEN DATEDIFF(year, c.Cliente_FechaNacimiento, GETDATE()) BETWEEN 36 AND 50 THEN (SELECT rango_etario_id FROM DB_SQUAD.BI_RangoEtario WHERE rango_etario_descripcion = '35-50')
+        WHEN DATEDIFF(year, c.Cliente_FechaNacimiento, GETDATE()) > 50 THEN (SELECT rango_etario_id FROM DB_SQUAD.BI_RangoEtario WHERE rango_etario_descripcion = '>50')
+        ELSE NULL
+    END
+FROM DB_SQUAD.Cliente c;
+PRINT 'Datos migrados a DB_SQUAD.BI_Cliente.';
+GO
+
+INSERT INTO DB_SQUAD.BI_Proveedor (proveedor_id_transaccional, proveedor_cuit, proveedor_razon_social)
+SELECT proveedor_id, proveedor_cuit, proveedor_razon_social
+FROM DB_SQUAD.Proveedor;
+PRINT 'Datos migrados a DB_SQUAD.BI_Proveedor.';
+GO
+
+INSERT INTO DB_SQUAD.BI_FactVentasComprasEnvios (
+    tiempo_id,
+    ubicacion_sucursal_id,
+    ubicacion_cliente_id,
+    ubicacion_proveedor_id,
+    rango_etario_cliente_id,
+    turno_ventas_id,
+    tipo_material_id,
+    modelo_sillon_id,
+    estado_pedido_id,
+    sucursal_id,
+    cliente_id,
+    proveedor_id,
+    ingresos_factura,
+    cantidad_facturas,
+    cantidad_pedidos,
+    cantidad_items_pedido,
+    egresos_compra,
+    cantidad_items_compra,
+    precio_unitario_item_compra,
+    subtotal_item_compra,
+    importe_envio_traslado,
+    importe_envio_subida,
+    total_envio,
+    envio_cumplido,
+    fecha_pedido,
+    fecha_factura,
+    fecha_compra,
+    fecha_envio_programada,
+    fecha_envio_entrega
+)
+
+SELECT
+    t.tiempo_id,
+    usuc.ubicacion_id AS ubicacion_sucursal_id,
+    ucli.ubicacion_id AS ubicacion_cliente_id,
+    NULL AS ubicacion_proveedor_id,
+    rec.rango_etario_id AS rango_etario_cliente_id,
+    CASE
+        WHEN DATEPART(HOUR, p.pedido_fecha) >= 8 AND DATEPART(HOUR, p.pedido_fecha) < 14 THEN (SELECT turno_id FROM DB_SQUAD.BI_TurnoVentas WHERE turno_descripcion = '08:00-14:00')
+        WHEN DATEPART(HOUR, p.pedido_fecha) >= 14 AND DATEPART(HOUR, p.pedido_fecha) < 20 THEN (SELECT turno_id FROM DB_SQUAD.BI_TurnoVentas WHERE turno_descripcion = '14:00-20:00')
+        ELSE NULL
+    END AS turno_ventas_id,
+    NULL AS tipo_material_id,
+    ms.modelo_id,
+    ep.estado_id,
+    bs.sucursal_bi_id,
+    bc.cliente_bi_id,
+    NULL AS proveedor_id,
+    NULL AS ingresos_factura,
+    NULL AS cantidad_facturas,
+    1 AS cantidad_pedidos, 
+    ip.item_pedido_cantidad AS cantidad_items_pedido,
+    NULL AS egresos_compra,
+    NULL AS cantidad_items_compra,
+    NULL AS precio_unitario_item_compra,
+    NULL AS subtotal_item_compra,
+    NULL AS importe_envio_traslado,
+    NULL AS importe_envio_subida,
+    NULL AS total_envio,
+    NULL AS envio_cumplido,
+    p.pedido_fecha,
+    NULL AS fecha_factura,
+    NULL AS fecha_compra,
+    NULL AS fecha_envio_programada,
+    NULL AS fecha_envio_entrega
+FROM DB_SQUAD.Pedido p
+JOIN DB_SQUAD.BI_Tiempo t ON YEAR(p.pedido_fecha) = t.anio AND MONTH(p.pedido_fecha) = t.mes
+JOIN DB_SQUAD.BI_Sucursal bs ON p.pedido_sucursal = bs.sucursal_id_transaccional
+JOIN DB_SQUAD.BI_Ubicacion usuc ON bs.sucursal_provincia_nombre = usuc.provincia_nombre AND bs.sucursal_localidad_nombre = usuc.localidad_nombre
+JOIN DB_SQUAD.Cliente c ON p.pedido_cliente = c.Cliente_ID
+JOIN DB_SQUAD.BI_Cliente bc ON c.Cliente_ID = bc.cliente_id_transaccional
+LEFT JOIN DB_SQUAD.BI_RangoEtario rec ON bc.cliente_rango_etario_id = rec.rango_etario_id
+LEFT JOIN DB_SQUAD.BI_Ubicacion ucli ON c.Cliente_Provincia = ucli.provincia_nombre AND c.Cliente_Localidad = ucli.localidad_nombre
+LEFT JOIN DB_SQUAD.ItemPedido ip ON p.pedido_codigo = ip.item_pedido_codigo
+LEFT JOIN DB_SQUAD.Sillon s ON ip.item_pedido_sillon = s.sillon_id
+LEFT JOIN DB_SQUAD.BI_ModeloSillon ms ON s.sillon_modelo = ms.modelo_id
+LEFT JOIN DB_SQUAD.BI_EstadoPedido ep ON p.pedido_estado = ep.estado_id
+WHERE p.pedido_codigo IS NOT NULL
+
+UNION ALL
+
+SELECT
+    t.tiempo_id,
+    NULL AS ubicacion_sucursal_id,
+    NULL AS ubicacion_cliente_id,
+    NULL AS ubicacion_proveedor_id,
+    NULL AS rango_etario_cliente_id,
+    NULL AS turno_ventas_id,
+    NULL AS tipo_material_id,
+    ms.modelo_id,
+    NULL AS estado_pedido_id,
+    NULL AS sucursal_id,
+    NULL AS cliente_id,
+    NULL AS proveedor_id,
+    f.fact_total AS ingresos_factura,
+    1 AS cantidad_facturas, 
+    NULL AS cantidad_pedidos,
+    ifac.item_fact_cantidad AS cantidad_items_pedido,
+    NULL AS egresos_compra,
+    NULL AS cantidad_items_compra,
+    NULL AS precio_unitario_item_compra,
+    NULL AS subtotal_item_compra,
+    NULL AS importe_envio_traslado,
+    NULL AS importe_envio_subida,
+    NULL AS total_envio,
+    NULL AS envio_cumplido,
+    NULL AS fecha_pedido,
+    f.fact_fecha,
+    NULL AS fecha_compra,
+    NULL AS fecha_envio_programada,
+    NULL AS fecha_envio_entrega
+FROM DB_SQUAD.Factura f
+JOIN DB_SQUAD.BI_Tiempo t ON YEAR(f.fact_fecha) = t.anio AND MONTH(f.fact_fecha) = t.mes
+LEFT JOIN DB_SQUAD.ItemFactura ifac ON f.factura_codigo = ifac.item_fact_codigo
+LEFT JOIN DB_SQUAD.Sillon s ON ifac.item_fact_sillon = s.sillon_id
+LEFT JOIN DB_SQUAD.BI_ModeloSillon ms ON s.sillon_modelo = ms.modelo_id
+WHERE f.factura_codigo IS NOT NULL
+
+UNION ALL
+
+SELECT
+    t.tiempo_id,
+    NULL AS ubicacion_sucursal_id,
+    NULL AS ubicacion_cliente_id,
+    up.ubicacion_id AS ubicacion_proveedor_id,
+    NULL AS rango_etario_cliente_id,
+    NULL AS turno_ventas_id,
+    bimat.tipo_material_id AS tipo_material_id,
+    NULL AS modelo_sillon_id,
+    NULL AS estado_pedido_id,
+    NULL AS sucursal_id,
+    NULL AS cliente_id,
+    bp.proveedor_bi_id,
+    NULL AS ingresos_factura,
+    NULL AS cantidad_facturas,
+    NULL AS cantidad_pedidos,
+    NULL AS cantidad_items_pedido,
+    c.compra_total AS egresos_compra,
+    ic.item_compra_cantidad AS cantidad_items_compra,
+    ic.item_compra_precio_unitario AS precio_unitario_item_compra,
+    ic.item_compra_subtotal AS subtotal_item_compra,
+    NULL AS importe_envio_traslado,
+    NULL AS importe_envio_subida,
+    NULL AS total_envio,
+    NULL AS envio_cumplido,
+    NULL AS fecha_pedido,
+    NULL AS fecha_factura,
+    c.compra_fecha,
+    NULL AS fecha_envio_programada,
+    NULL AS fecha_envio_entrega
+FROM DB_SQUAD.Compra c
+JOIN DB_SQUAD.BI_Tiempo t ON YEAR(c.compra_fecha) = t.anio AND MONTH(c.compra_fecha) = t.mes
+JOIN DB_SQUAD.BI_Proveedor bp ON c.compra_proveedor = bp.proveedor_id_transaccional
+LEFT JOIN DB_SQUAD.Proveedor p_transaccional ON bp.proveedor_id_transaccional = p_transaccional.proveedor_id
+LEFT JOIN DB_SQUAD.Localidad l ON p_transaccional.proveedor_localidad = l.localidad_codigo
+LEFT JOIN DB_SQUAD.Provincia prov ON p_transaccional.proveedor_provincia = prov.provincia_codigo
+LEFT JOIN DB_SQUAD.BI_Ubicacion up ON prov.provincia_nombre = up.provincia_nombre AND l.localidad_nombre = up.localidad_nombre
+LEFT JOIN DB_SQUAD.ItemCompra ic ON c.compra_codigo = ic.item_compra_codigo
+LEFT JOIN DB_SQUAD.ItemMaterial im ON ic.item_compra_sillon = im.item_material_sillon
+LEFT JOIN DB_SQUAD.Material m_transaccional ON im.item_material_material = m_transaccional.material_codigo
+LEFT JOIN DB_SQUAD.BI_TipoMaterial bimat ON
+    CASE
+        WHEN m_transaccional.material_descripcion LIKE '%relleno%' THEN 'Relleno'
+        WHEN m_transaccional.material_descripcion LIKE '%madera%' THEN 'Madera'
+        WHEN m_transaccional.material_descripcion LIKE '%tela%' THEN 'Tela'
+        ELSE NULL
+    END = bimat.tipo_material_descripcion
+WHERE c.compra_codigo IS NOT NULL
+
+UNION ALL
+
+SELECT
+    t.tiempo_id,
+    NULL AS ubicacion_sucursal_id,
+    ucli.ubicacion_id AS ubicacion_cliente_id,
+    NULL AS ubicacion_proveedor_id,
+    rec.rango_etario_id AS rango_etario_cliente_id,
+    NULL AS turno_ventas_id,
+    NULL AS tipo_material_id,
+    NULL AS modelo_sillon_id,
+    NULL AS estado_pedido_id,
+    NULL AS sucursal_id,
+    bc.cliente_bi_id,
+    NULL AS proveedor_id,
+    NULL AS ingresos_factura,
+    NULL AS cantidad_facturas,
+    NULL AS cantidad_pedidos,
+    NULL AS cantidad_items_pedido,
+    NULL AS egresos_compra,
+    NULL AS cantidad_items_compra,
+    NULL AS precio_unitario_item_compra,
+    NULL AS subtotal_item_compra,
+    e.envio_importe_traslado,
+    e.envio_importe_subida,
+    e.envio_total,
+    CASE WHEN e.envio_fecha_entrega <= e.envio_fecha_programada THEN 1 ELSE 0 END AS envio_cumplido,
+    NULL AS fecha_pedido,
+    NULL AS fecha_factura,
+    NULL AS fecha_compra,
+    e.envio_fecha_programada,
+    e.envio_fecha_entrega
+FROM DB_SQUAD.Envio e
+JOIN DB_SQUAD.Factura f ON e.envio_factura = f.factura_codigo
+JOIN DB_SQUAD.BI_Tiempo t ON YEAR(e.envio_fecha_programada) = t.anio AND MONTH(e.envio_fecha_programada) = t.mes
+LEFT JOIN DB_SQUAD.Pedido p ON p.pedido_codigo = (SELECT TOP 1 p2.pedido_codigo FROM DB_SQUAD.Pedido p2 WHERE p2.pedido_cliente IN (SELECT c2.Cliente_ID FROM DB_SQUAD.Cliente c2 WHERE c2.Cliente_ID = (SELECT TOP 1 f2.pedido_cliente FROM DB_SQUAD.Pedido f2 JOIN DB_SQUAD.ItemFactura if2 ON f.factura_codigo = if2.item_fact_codigo JOIN DB_SQUAD.ItemPedido ip2 ON if2.item_fact_sillon = ip2.item_pedido_sillon WHERE f.factura_codigo = f2.pedido_codigo))) -- Esto es una simplificación, la relación factura-cliente debería ser más robusta
+LEFT JOIN DB_SQUAD.Cliente c ON p.pedido_cliente = c.Cliente_ID
+LEFT JOIN DB_SQUAD.BI_Cliente bc ON c.Cliente_ID = bc.cliente_id_transaccional
+LEFT JOIN DB_SQUAD.BI_RangoEtario rec ON bc.cliente_rango_etario_id = rec.rango_etario_id
+LEFT JOIN DB_SQUAD.BI_Ubicacion ucli ON c.Cliente_Provincia = ucli.provincia_nombre AND c.Cliente_Localidad = ucli.localidad_nombre
+WHERE e.envio_codigo IS NOT NULL;
+
+PRINT 'Datos migrados a DB_SQUAD.BI_FactVentasComprasEnvios.';
+GO
+
+PRINT '---------------------------------------------------';
+PRINT 'Comenzando la creación de vistas para consultas de negocio.';
+PRINT '---------------------------------------------------';
+GO 
+
+CREATE VIEW DB_SQUAD.BI_GananciasPorMesSucursal AS
+SELECT
+    t.anio,
+    t.mes,
+    bs.sucursal_numero_maestra AS NumeroSucursal,
+    bs.sucursal_mail AS SucursalMail,
+    bs.sucursal_direccion_nombre AS SucursalDireccion,
+    SUM(fv.ingresos_factura) AS TotalIngresos,
+    SUM(fv.egresos_compra) AS TotalEgresos,
+    SUM(fv.ingresos_factura) - SUM(fv.egresos_compra) AS GananciaNeta
+FROM DB_SQUAD.BI_FactVentasComprasEnvios fv
+JOIN DB_SQUAD.BI_Tiempo t ON fv.tiempo_id = t.tiempo_id
+LEFT JOIN DB_SQUAD.BI_Sucursal bs ON fv.sucursal_id = bs.sucursal_bi_id
+GROUP BY
+    t.anio,
+    t.mes,
+    bs.sucursal_numero_maestra,
+    bs.sucursal_mail,
+    bs.sucursal_direccion_nombre;
+GO
+PRINT 'Vista DB_SQUAD.BI_GananciasPorMesSucursal creada.';
+GO 
+
+CREATE VIEW DB_SQUAD.BI_FacturaPromedioMensualPorProvinciaCuatrimestre AS
+SELECT
+    t.anio,
+    t.cuatrimestre,
+    usuc.provincia_nombre AS ProvinciaSucursal,
+    SUM(fv.ingresos_factura) AS SumaImporteFacturas,
+    SUM(fv.cantidad_facturas) AS TotalFacturas,
+    CASE
+        WHEN SUM(fv.cantidad_facturas) > 0 THEN SUM(fv.ingresos_factura) / SUM(fv.cantidad_facturas)
+        ELSE 0
+    END AS FacturaPromedio
+FROM DB_SQUAD.BI_FactVentasComprasEnvios fv
+JOIN DB_SQUAD.BI_Tiempo t ON fv.tiempo_id = t.tiempo_id
+LEFT JOIN DB_SQUAD.BI_Sucursal bs ON fv.sucursal_id = bs.sucursal_bi_id
+LEFT JOIN DB_SQUAD.BI_Ubicacion usuc ON bs.sucursal_provincia_nombre = usuc.provincia_nombre 
+    AND bs.sucursal_localidad_nombre = usuc.localidad_nombre
+WHERE fv.ingresos_factura IS NOT NULL
+GROUP BY
+    t.anio,           
+    t.cuatrimestre,
+    usuc.provincia_nombre;
+GO
+
+PRINT 'Vista DB_SQUAD.BI_FacturaPromedioMensualPorProvinciaCuatrimestre creada.';
+GO
+
+CREATE VIEW DB_SQUAD.BI_RendimientoModelosTop3 AS
+WITH ModeloVentas AS (
+    SELECT
+        t.anio,
+        t.cuatrimestre,
+        usuc.localidad_nombre AS LocalidadSucursal,
+        bre.rango_etario_descripcion AS RangoEtarioCliente,
+        bms.modelo_descripcion AS ModeloSillon,
+        SUM(fv.cantidad_items_pedido) AS CantidadVendida,
+        ROW_NUMBER() OVER (PARTITION BY t.anio, t.cuatrimestre, usuc.localidad_nombre, bre.rango_etario_descripcion ORDER BY SUM(fv.cantidad_items_pedido) DESC) as rn
+    FROM DB_SQUAD.BI_FactVentasComprasEnvios fv
+    JOIN DB_SQUAD.BI_Tiempo t ON fv.tiempo_id = t.tiempo_id
+    JOIN DB_SQUAD.BI_ModeloSillon bms ON fv.modelo_sillon_id = bms.modelo_id
+    LEFT JOIN DB_SQUAD.BI_Sucursal bs ON fv.sucursal_id = bs.sucursal_bi_id
+    LEFT JOIN DB_SQUAD.BI_Ubicacion usuc ON bs.sucursal_provincia_nombre = usuc.provincia_nombre AND bs.sucursal_localidad_nombre = usuc.localidad_nombre
+    LEFT JOIN DB_SQUAD.BI_Cliente bc ON fv.cliente_id = bc.cliente_bi_id
+    LEFT JOIN DB_SQUAD.BI_RangoEtario bre ON bc.cliente_rango_etario_id = bre.rango_etario_id
+    WHERE fv.cantidad_items_pedido IS NOT NULL
+    GROUP BY
+        t.anio,
+        t.cuatrimestre,
+        usuc.localidad_nombre,
+        bre.rango_etario_descripcion,
+        bms.modelo_descripcion
+)
+SELECT
+    anio,
+    cuatrimestre,
+    LocalidadSucursal,
+    RangoEtarioCliente,
+    ModeloSillon,
+    CantidadVendida
+FROM ModeloVentas
+WHERE rn <= 3;
+GO
+PRINT 'Vista DB_SQUAD.BI_RendimientoModelosTop3 creada.';
+GO
+
+CREATE VIEW DB_SQUAD.BI_VolumenPedidosPorTurnoSucursalMes AS
+SELECT
+    t.anio,
+    t.mes,
+    btv.turno_descripcion AS TurnoVentas,
+    bs.sucursal_numero_maestra AS NumeroSucursal,
+    COUNT(fv.cantidad_pedidos) AS CantidadPedidos
+FROM DB_SQUAD.BI_FactVentasComprasEnvios fv
+JOIN DB_SQUAD.BI_Tiempo t ON fv.tiempo_id = t.tiempo_id
+JOIN DB_SQUAD.BI_TurnoVentas btv ON fv.turno_ventas_id = btv.turno_id
+LEFT JOIN DB_SQUAD.BI_Sucursal bs ON fv.sucursal_id = bs.sucursal_bi_id
+WHERE fv.cantidad_pedidos IS NOT NULL 
+GROUP BY
+    t.anio,
+    t.mes,
+    btv.turno_descripcion,
+    bs.sucursal_numero_maestra;
+GO
+PRINT 'Vista DB_SQUAD.BI_VolumenPedidosPorTurnoSucursalMes creada.';
+GO
+
+CREATE VIEW DB_SQUAD.BI_ConversionPedidosPorEstadoCuatrimestreSucursal AS
+SELECT
+    t.anio,
+    t.cuatrimestre,
+    bs.sucursal_numero_maestra AS NumeroSucursal,
+    bep.estado_nombre AS EstadoPedido,
+    CAST(COUNT(fv.cantidad_pedidos) AS DECIMAL(18,2)) * 100.0 / SUM(COUNT(fv.cantidad_pedidos)) OVER (PARTITION BY t.anio, t.cuatrimestre, bs.sucursal_numero_maestra) AS PorcentajePedidos
+FROM DB_SQUAD.BI_FactVentasComprasEnvios fv
+JOIN DB_SQUAD.BI_Tiempo t ON fv.tiempo_id = t.tiempo_id
+JOIN DB_SQUAD.BI_EstadoPedido bep ON fv.estado_pedido_id = bep.estado_id
+LEFT JOIN DB_SQUAD.BI_Sucursal bs ON fv.sucursal_id = bs.sucursal_bi_id
+WHERE fv.cantidad_pedidos IS NOT NULL 
+GROUP BY
+    t.anio,
+    t.cuatrimestre,
+    bs.sucursal_numero_maestra,
+    bep.estado_nombre;
+GO
+PRINT 'Vista DB_SQUAD.BI_ConversionPedidosPorEstadoCuatrimestreSucursal creada.';
+GO
+
+CREATE VIEW DB_SQUAD.BI_TiempoPromedioFabricacionPorCuatrimestre AS
+SELECT
+    t.anio,
+    t.cuatrimestre,
+    bs.sucursal_numero_maestra AS NumeroSucursal,
+    AVG(CAST(DATEDIFF(day, fv_pedido.fecha_pedido, fv_factura.fecha_factura) AS DECIMAL(18,2))) AS TiempoPromedioDias
+FROM DB_SQUAD.BI_FactVentasComprasEnvios fv_pedido
+JOIN DB_SQUAD.BI_FactVentasComprasEnvios fv_factura
+    ON fv_pedido.sucursal_id = fv_factura.sucursal_id
+    AND YEAR(fv_pedido.fecha_pedido) = YEAR(fv_factura.fecha_factura)
+    AND MONTH(fv_pedido.fecha_pedido) = MONTH(fv_factura.fecha_factura) 
+                                                                        
+JOIN DB_SQUAD.BI_Tiempo t ON fv_pedido.tiempo_id = t.tiempo_id
+LEFT JOIN DB_SQUAD.BI_Sucursal bs ON fv_pedido.sucursal_id = bs.sucursal_bi_id
+WHERE fv_pedido.fecha_pedido IS NOT NULL
+  AND fv_factura.fecha_factura IS NOT NULL
+  AND fv_pedido.cantidad_pedidos IS NOT NULL 
+  AND fv_factura.ingresos_factura IS NOT NULL 
+GROUP BY
+    t.anio,
+    t.cuatrimestre,
+    bs.sucursal_numero_maestra;
+GO
+PRINT 'Vista DB_SQUAD.BI_TiempoPromedioFabricacionPorCuatrimestre creada.';
+GO
+
+CREATE VIEW DB_SQUAD.BI_PromedioComprasPorMes AS
+SELECT
+    t.anio,
+    t.mes,
+    AVG(fv.egresos_compra) AS ImportePromedioCompras
+FROM DB_SQUAD.BI_FactVentasComprasEnvios fv
+JOIN DB_SQUAD.BI_Tiempo t ON fv.tiempo_id = t.tiempo_id
+WHERE fv.egresos_compra IS NOT NULL 
+GROUP BY
+    t.anio,
+    t.mes;
+GO
+PRINT 'Vista DB_SQUAD.BI_PromedioComprasPorMes creada.';
+GO
+
+CREATE VIEW DB_SQUAD.BI_ComprasPorTipoMaterialSucursalCuatrimestre AS
+SELECT
+    t.anio,
+    t.cuatrimestre,
+    bs.sucursal_numero_maestra AS NumeroSucursal, 
+    btm.tipo_material_descripcion AS TipoMaterial,
+    SUM(fv.egresos_compra) AS ImporteTotalGastado
+FROM DB_SQUAD.BI_FactVentasComprasEnvios fv
+JOIN DB_SQUAD.BI_Tiempo t ON fv.tiempo_id = t.tiempo_id
+LEFT JOIN DB_SQUAD.BI_TipoMaterial btm ON fv.tipo_material_id = btm.tipo_material_id
+LEFT JOIN DB_SQUAD.BI_Sucursal bs ON fv.sucursal_id = bs.sucursal_bi_id 
+WHERE fv.egresos_compra IS NOT NULL AND btm.tipo_material_descripcion IS NOT NULL
+GROUP BY
+    t.anio,
+    t.cuatrimestre,
+    bs.sucursal_numero_maestra,
+    btm.tipo_material_descripcion;
+GO
+PRINT 'Vista DB_SQUAD.BI_ComprasPorTipoMaterialSucursalCuatrimestre creada.';
+GO
+
+CREATE VIEW DB_SQUAD.BI_PorcentajeCumplimientoEnvios AS
+SELECT
+    t.anio,
+    t.mes,
+    CAST(SUM(CASE WHEN fv.envio_cumplido = 1 THEN 1 ELSE 0 END) AS DECIMAL(18,2)) * 100.0 / COUNT(fv.total_envio) AS PorcentajeCumplimiento
+FROM DB_SQUAD.BI_FactVentasComprasEnvios fv
+JOIN DB_SQUAD.BI_Tiempo t ON fv.tiempo_id = t.tiempo_id
+WHERE fv.total_envio IS NOT NULL 
+GROUP BY
+    t.anio,
+    t.mes;
+GO
+PRINT 'Vista DB_SQUAD.BI_PorcentajeCumplimientoEnvios creada.';
+GO
+
+CREATE VIEW DB_SQUAD.BI_LocalidadesMayorCostoEnvio AS
+WITH LocalidadCostoEnvio AS (
+    SELECT
+        ucli.provincia_nombre AS ProvinciaCliente,
+        ucli.localidad_nombre AS LocalidadCliente,
+        AVG(fv.total_envio) AS PromedioCostoEnvio,
+        ROW_NUMBER() OVER (ORDER BY AVG(fv.total_envio) DESC) as rn
+    FROM DB_SQUAD.BI_FactVentasComprasEnvios fv
+    LEFT JOIN DB_SQUAD.BI_Ubicacion ucli ON fv.ubicacion_cliente_id = ucli.ubicacion_id
+    WHERE fv.total_envio IS NOT NULL 
+    GROUP BY
+        ucli.provincia_nombre,
+        ucli.localidad_nombre
+)
+SELECT
+    ProvinciaCliente,
+    LocalidadCliente,
+    PromedioCostoEnvio
+FROM LocalidadCostoEnvio
+WHERE rn <= 3;
+GO
+PRINT 'Vista DB_SQUAD.BI_LocalidadesMayorCostoEnvio creada.';
+GO
+
+PRINT '---------------------------------------------------';
+PRINT 'Proceso de creación y migración del modelo BI completado.';
+PRINT '---------------------------------------------------';
+GO
