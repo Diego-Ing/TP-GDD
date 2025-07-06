@@ -110,3 +110,18 @@ PRINT '--- CONSULTA DE DATOS: DB_SQUAD.ItemFactura ---';
 SELECT TOP 1000 * FROM DB_SQUAD.ItemFactura ORDER BY item_fact_id;
 SELECT COUNT(*) AS Total_Filas_ItemFactura FROM DB_SQUAD.ItemFactura;
 GO
+
+
+PRINT '--- CONSULTAS AL MODELO BI ---'
+SELECT TOP 100 *
+FROM DB_SQUAD.BI_GananciasPorMesSucursal;
+SELECT TOP 100 *
+FROM DB_SQUAD.BI_FacturaPromedioMensualPorProvinciaCuatrimestre;
+SELECT TOP 100 *
+FROM DB_SQUAD.BI_RendimientoModelosTop3;
+SELECT TOP 100 *
+FROM DB_SQUAD.BI_VolumenPedidosPorTurnoSucursalMes;
+SELECT TOP 100 *
+FROM DB_SQUAD.BI_PorcentajeCumplimientoEnvios;
+SELECT TOP 100 *
+FROM DB_SQUAD.BI_LocalidadesMayorCostoEnvio;
