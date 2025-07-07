@@ -18,10 +18,8 @@ IF OBJECT_ID('DB_SQUAD.BI_LocalidadesMayorCostoEnvio', 'V') IS NOT NULL DROP VIE
 PRINT 'Vistas de BI eliminadas si existían.';
 GO
 
--- Eliminar tablas de hechos (primero las de hechos para evitar problemas de FKs)
--- Eliminar la tabla de hechos anterior
+-- Eliminar tablas de hechos 
 IF OBJECT_ID('DB_SQUAD.BI_FactVentasComprasEnvios', 'U') IS NOT NULL DROP TABLE DB_SQUAD.BI_FactVentasComprasEnvios;
--- Eliminar las nuevas tablas de hechos si ya existieran de una ejecución previa
 IF OBJECT_ID('DB_SQUAD.BI_FactPedidos', 'U') IS NOT NULL DROP TABLE DB_SQUAD.BI_FactPedidos;
 IF OBJECT_ID('DB_SQUAD.BI_FactVentas', 'U') IS NOT NULL DROP TABLE DB_SQUAD.BI_FactVentas;
 IF OBJECT_ID('DB_SQUAD.BI_FactCompras', 'U') IS NOT NULL DROP TABLE DB_SQUAD.BI_FactCompras;
@@ -46,7 +44,7 @@ PRINT 'Comenzando la creación de tablas y vistas de BI.';
 
 GO
 
--- Creación de Tablas de Dimensiones (sin cambios en su estructura, son correctas)
+-- Creación de Tablas de Dimensiones
 
 CREATE TABLE DB_SQUAD.BI_Tiempo (
     tiempo_id INT IDENTITY(1,1) PRIMARY KEY,
@@ -93,7 +91,7 @@ CREATE TABLE DB_SQUAD.BI_ModeloSillon (
     modelo_descripcion NVARCHAR(100),
     modelo_precio_base DECIMAL(12,2)
 );
-PRINT 'Tabla DB_SQUAD.BI_ModeloSillon creada.';
+PRINT 'Tabla DB_SQUAD.BI_ModeloSillon creada';
 GO
 
 CREATE TABLE DB_SQUAD.BI_EstadoPedido (
@@ -112,34 +110,34 @@ CREATE TABLE DB_SQUAD.BI_Sucursal (
     sucursal_localidad_nombre NVARCHAR(255) NULL,
     sucursal_provincia_nombre NVARCHAR(255) NULL
 );
-PRINT 'Tabla DB_SQUAD.BI_Sucursal creada.';
+PRINT 'Tabla DB_SQUAD.BI_Sucursal creada';
 GO
 
 CREATE TABLE DB_SQUAD.BI_Cliente (
     cliente_bi_id INT IDENTITY(1,1) PRIMARY KEY,
     cliente_id_transaccional INT NOT NULL UNIQUE,
-    cliente_dni NVARCHAR(20) NULL, -- Mantener NVARCHAR(20) si el DNI original puede tener letras o guiones
+    cliente_dni NVARCHAR(20) NULL,
     cliente_nombre_completo NVARCHAR(511) NULL,
     cliente_rango_etario_id INT,
     FOREIGN KEY (cliente_rango_etario_id) REFERENCES DB_SQUAD.BI_RangoEtario(rango_etario_id)
 );
-PRINT 'Tabla DB_SQUAD.BI_Cliente creada.';
+PRINT 'Tabla DB_SQUAD.BI_Cliente creada';
 GO
 
 CREATE TABLE DB_SQUAD.BI_Proveedor (
     proveedor_bi_id INT IDENTITY(1,1) PRIMARY KEY,
     proveedor_id_transaccional INT NOT NULL UNIQUE,
-    proveedor_cuit NVARCHAR(20) NOT NULL, -- Mantener NVARCHAR(20) si el CUIT original puede tener guiones
+    proveedor_cuit NVARCHAR(20) NOT NULL,
     proveedor_razon_social NVARCHAR(255) NULL
 );
 PRINT 'Tabla DB_SQUAD.BI_Proveedor creada.';
 GO
 
--- INICIO DE LAS NUEVAS TABLAS DE HECHOS
+-- INICIO DE LAS NUEVAS TABLAS DE HECHOS 
 
 -- Hechos de Pedidos
 CREATE TABLE DB_SQUAD.BI_FactPedidos (
-    fact_pedido_sk BIGINT IDENTITY(1,1) PRIMARY KEY, -- Surrogate Key para la tabla de hechos
+    fact_pedido_sk BIGINT IDENTITY(1,1) PRIMARY KEY,
     tiempo_id INT NOT NULL,
     sucursal_id INT NULL,
     cliente_id INT NULL,
@@ -147,9 +145,9 @@ CREATE TABLE DB_SQUAD.BI_FactPedidos (
     turno_ventas_id INT NULL,
     modelo_sillon_id BIGINT NULL,
     estado_pedido_id CHAR(1) NULL,
-    CantidadPedidos INT NOT NULL,           -- Medida: Conteo de pedidos
-    CantidadItemsPedido INT NOT NULL,       -- Medida: Suma de items en los pedidos
-    TotalMontoPedidos DECIMAL(18,2) NOT NULL, -- Medida: Suma del total de los pedidos
+    CantidadPedidos INT NOT NULL,
+    CantidadItemsPedido INT NOT NULL,
+    TotalMontoPedidos DECIMAL(18,2) NOT NULL,
 
     FOREIGN KEY (tiempo_id) REFERENCES DB_SQUAD.BI_Tiempo(tiempo_id),
     FOREIGN KEY (sucursal_id) REFERENCES DB_SQUAD.BI_Sucursal(sucursal_bi_id),
@@ -159,36 +157,32 @@ CREATE TABLE DB_SQUAD.BI_FactPedidos (
     FOREIGN KEY (modelo_sillon_id) REFERENCES DB_SQUAD.BI_ModeloSillon(modelo_id),
     FOREIGN KEY (estado_pedido_id) REFERENCES DB_SQUAD.BI_EstadoPedido(estado_id)
 );
-PRINT 'Tabla DB_SQUAD.BI_FactPedidos creada.';
+PRINT 'Tabla DB_SQUAD.BI_FactPedidos creada';
 GO
 
--- Hechos de Ventas (Facturación)
+-- Hechos de Ventas 
 CREATE TABLE DB_SQUAD.BI_FactVentas (
-    fact_venta_sk BIGINT IDENTITY(1,1) PRIMARY KEY, -- Surrogate Key
+    fact_venta_sk BIGINT IDENTITY(1,1) PRIMARY KEY,
     tiempo_id INT NOT NULL,
-    sucursal_id INT NULL,
-    cliente_id INT NULL,
-    rango_etario_id INT NULL,
-    CantidadFacturas INT NOT NULL,          -- Medida: Conteo de facturas
-    TotalIngresos DECIMAL(18,2) NOT NULL,   -- Medida: Suma total de ingresos facturados
-    CantidadItemsVendidos INT NOT NULL,     -- Medida: Suma de ítems vendidos
+    modelo_sillon_id BIGINT NULL, 
+    CantidadFacturas INT NOT NULL,
+    TotalIngresos DECIMAL(18,2) NOT NULL,
+    CantidadItemsVendidos INT NOT NULL,
 
     FOREIGN KEY (tiempo_id) REFERENCES DB_SQUAD.BI_Tiempo(tiempo_id),
-    FOREIGN KEY (sucursal_id) REFERENCES DB_SQUAD.BI_Sucursal(sucursal_bi_id),
-    FOREIGN KEY (cliente_id) REFERENCES DB_SQUAD.BI_Cliente(cliente_bi_id),
-    FOREIGN KEY (rango_etario_id) REFERENCES DB_SQUAD.BI_RangoEtario(rango_etario_id)
+    FOREIGN KEY (modelo_sillon_id) REFERENCES DB_SQUAD.BI_ModeloSillon(modelo_id)
 );
 PRINT 'Tabla DB_SQUAD.BI_FactVentas creada.';
 GO
 
--- Hechos de Compras
+-- Hechos de Compras 
 CREATE TABLE DB_SQUAD.BI_FactCompras (
-    fact_compra_sk BIGINT IDENTITY(1,1) PRIMARY KEY, -- Surrogate Key
+    fact_compra_sk BIGINT IDENTITY(1,1) PRIMARY KEY,
     tiempo_id INT NOT NULL,
     proveedor_id INT NULL,
     tipo_material_id INT NULL,
-    TotalEgresos DECIMAL(18,2) NOT NULL,    -- Medida: Suma total de egresos por compras
-    CantidadItemsComprados INT NOT NULL,    -- Medida: Suma de ítems comprados
+    TotalEgresos DECIMAL(18,2) NOT NULL,
+    CantidadItemsComprados INT NOT NULL,
 
     FOREIGN KEY (tiempo_id) REFERENCES DB_SQUAD.BI_Tiempo(tiempo_id),
     FOREIGN KEY (proveedor_id) REFERENCES DB_SQUAD.BI_Proveedor(proveedor_bi_id),
@@ -197,26 +191,22 @@ CREATE TABLE DB_SQUAD.BI_FactCompras (
 PRINT 'Tabla DB_SQUAD.BI_FactCompras creada.';
 GO
 
--- Hechos de Envíos
+-- Hechos de Envíos 
 CREATE TABLE DB_SQUAD.BI_FactEnvios (
-    fact_envio_sk BIGINT IDENTITY(1,1) PRIMARY KEY, -- Surrogate Key
-    tiempo_id INT NOT NULL, -- Fecha de programación del envío
-    cliente_id INT NULL,
-    ubicacion_cliente_id INT NULL,
-    TotalCostoEnvio DECIMAL(18,2) NOT NULL,     -- Medida: Suma total de costo de envío
-    CantidadEnvios INT NOT NULL,                -- Medida: Conteo de envíos
-    CantidadEnviosCumplidos INT NOT NULL,       -- Medida: Conteo de envíos cumplidos a tiempo
-    TiempoPromedioEntregaDias DECIMAL(18,2) NULL, -- Medida: Promedio de días entre programado y entrega
+    fact_envio_sk BIGINT IDENTITY(1,1) PRIMARY KEY,
+    tiempo_id INT NOT NULL, 
+    TotalCostoEnvio DECIMAL(18,2) NOT NULL,
+    CantidadEnvios INT NOT NULL,
+    CantidadEnviosCumplidos INT NOT NULL,
+    TiempoPromedioEntregaDias DECIMAL(18,2) NULL,
 
-    FOREIGN KEY (tiempo_id) REFERENCES DB_SQUAD.BI_Tiempo(tiempo_id),
-    FOREIGN KEY (cliente_id) REFERENCES DB_SQUAD.BI_Cliente(cliente_bi_id),
-    FOREIGN KEY (ubicacion_cliente_id) REFERENCES DB_SQUAD.BI_Ubicacion(ubicacion_id)
+    FOREIGN KEY (tiempo_id) REFERENCES DB_SQUAD.BI_Tiempo(tiempo_id)
 );
 PRINT 'Tabla DB_SQUAD.BI_FactEnvios creada.';
 GO
 
-
 -- FIN DE LAS NUEVAS TABLAS DE HECHOS
+
 
 
 PRINT 'Comenzando la migración de datos a las tablas de BI.';
@@ -289,7 +279,7 @@ GO
 INSERT INTO DB_SQUAD.BI_Sucursal (sucursal_id_transaccional, sucursal_numero_maestra, sucursal_mail, sucursal_direccion_nombre, sucursal_localidad_nombre, sucursal_provincia_nombre)
 SELECT
     s.sucursal_id,
-    s.sucursal_numero_maestra, -- Usar el nombre de columna correcto si es diferente en tu tabla transaccional
+    s.sucursal_numero_maestra,
     s.sucursal_mail,
     d.direccion_nombre,
     l.localidad_nombre,
@@ -323,11 +313,10 @@ FROM DB_SQUAD.Proveedor;
 PRINT 'Datos migrados a DB_SQUAD.BI_Proveedor.';
 GO
 
+-- INICIO DE MIGRACIÓN DE DATOS A LAS NUEVAS TABLAS DE HECHOS
 
--- INICIO DE MIGRACIÓN DE DATOS A LAS NUEVAS TABLAS DE HECHOS (AGREGADAS)
 
-
--- Migración a BI_FactPedidos
+-- Migración a BI_FactPedidos 
 INSERT INTO DB_SQUAD.BI_FactPedidos (
     tiempo_id,
     sucursal_id,
@@ -378,39 +367,29 @@ GROUP BY
 PRINT 'Datos migrados a DB_SQUAD.BI_FactPedidos.';
 GO
 
--- Migración a BI_FactVentas
+-- Migración a BI_FactVentas 
 INSERT INTO DB_SQUAD.BI_FactVentas (
     tiempo_id,
-    sucursal_id, -- Se intentará inferir la sucursal de la factura a través del pedido o cliente
-    cliente_id,
-    rango_etario_id,
+    modelo_sillon_id,
     CantidadFacturas,
     TotalIngresos,
     CantidadItemsVendidos
 )
 SELECT
     t.tiempo_id,
-    bs.sucursal_bi_id,
-    bc.cliente_bi_id,
-    bre.rango_etario_id,
+    bms.modelo_id,
     COUNT(DISTINCT f.factura_codigo) AS CantidadFacturas,
     SUM(f.fact_total) AS TotalIngresos,
     SUM(ifac.item_fact_cantidad) AS CantidadItemsVendidos
 FROM DB_SQUAD.Factura f
 JOIN DB_SQUAD.BI_Tiempo t ON YEAR(f.fact_fecha) = t.anio AND MONTH(f.fact_fecha) = t.mes
--- Para obtener la sucursal y el cliente de la factura, necesitamos uniones indirectas
-LEFT JOIN DB_SQUAD.Envio e ON f.factura_codigo = e.envio_factura -- Asumimos que la factura está en un envío
-LEFT JOIN DB_SQUAD.Pedido p ON p.pedido_codigo = (SELECT TOP 1 p2.pedido_codigo FROM DB_SQUAD.Pedido p2 JOIN DB_SQUAD.ItemFactura if2 ON p2.pedido_codigo = if2.item_fact_codigo WHERE if2.item_fact_codigo = f.factura_codigo) -- Simplificación: busca un pedido con el mismo código de factura en ItemFactura
-LEFT JOIN DB_SQUAD.BI_Sucursal bs ON p.pedido_sucursal = bs.sucursal_id_transaccional
-LEFT JOIN DB_SQUAD.BI_Cliente bc ON p.pedido_cliente = bc.cliente_id_transaccional
-LEFT JOIN DB_SQUAD.BI_RangoEtario bre ON bc.cliente_rango_etario_id = bre.rango_etario_id
 LEFT JOIN DB_SQUAD.ItemFactura ifac ON f.factura_codigo = ifac.item_fact_codigo
+LEFT JOIN DB_SQUAD.Sillon s ON ifac.item_fact_sillon = s.sillon_id
+LEFT JOIN DB_SQUAD.BI_ModeloSillon bms ON s.sillon_modelo = bms.modelo_id
 WHERE f.factura_codigo IS NOT NULL
 GROUP BY
     t.tiempo_id,
-    bs.sucursal_bi_id,
-    bc.cliente_bi_id,
-    bre.rango_etario_id;
+    bms.modelo_id;
 PRINT 'Datos migrados a DB_SQUAD.BI_FactVentas.';
 GO
 
@@ -432,7 +411,7 @@ FROM DB_SQUAD.Compra c
 JOIN DB_SQUAD.BI_Tiempo t ON YEAR(c.compra_fecha) = t.anio AND MONTH(c.compra_fecha) = t.mes
 LEFT JOIN DB_SQUAD.BI_Proveedor bp ON c.compra_proveedor = bp.proveedor_id_transaccional
 LEFT JOIN DB_SQUAD.ItemCompra ic ON c.compra_codigo = ic.item_compra_codigo
-LEFT JOIN DB_SQUAD.ItemMaterial im ON ic.item_compra_sillon = im.item_material_sillon -- Asumiendo que item_compra_sillon se relaciona con ItemMaterial
+LEFT JOIN DB_SQUAD.ItemMaterial im ON ic.item_compra_sillon = im.item_material_sillon
 LEFT JOIN DB_SQUAD.Material m_transaccional ON im.item_material_material = m_transaccional.material_codigo
 LEFT JOIN DB_SQUAD.BI_TipoMaterial btm ON
     CASE
@@ -449,11 +428,9 @@ GROUP BY
 PRINT 'Datos migrados a DB_SQUAD.BI_FactCompras.';
 GO
 
--- Migración a BI_FactEnvios
+-- Migración a BI_FactEnvios 
 INSERT INTO DB_SQUAD.BI_FactEnvios (
     tiempo_id,
-    cliente_id,
-    ubicacion_cliente_id,
     TotalCostoEnvio,
     CantidadEnvios,
     CantidadEnviosCumplidos,
@@ -461,72 +438,48 @@ INSERT INTO DB_SQUAD.BI_FactEnvios (
 )
 SELECT
     t.tiempo_id,
-    bc.cliente_bi_id,
-    bu.ubicacion_id AS ubicacion_cliente_id,
     SUM(e.envio_total) AS TotalCostoEnvio,
     COUNT(e.envio_codigo) AS CantidadEnvios,
     SUM(CASE WHEN e.envio_fecha_entrega <= e.envio_fecha_programada THEN 1 ELSE 0 END) AS CantidadEnviosCumplidos,
     AVG(CAST(DATEDIFF(day, e.envio_fecha_programada, e.envio_fecha_entrega) AS DECIMAL(18,2))) AS TiempoPromedioEntregaDias
 FROM DB_SQUAD.Envio e
 JOIN DB_SQUAD.BI_Tiempo t ON YEAR(e.envio_fecha_programada) = t.anio AND MONTH(e.envio_fecha_programada) = t.mes
-
-LEFT JOIN DB_SQUAD.Factura f ON e.envio_factura = f.factura_codigo
-LEFT JOIN DB_SQUAD.Pedido p ON p.pedido_codigo = (SELECT TOP 1 p2.pedido_codigo FROM DB_SQUAD.Pedido p2 JOIN DB_SQUAD.ItemFactura if2 ON p2.pedido_codigo = if2.item_fact_codigo WHERE if2.item_fact_codigo = f.factura_codigo) -- Simplificación: busca un pedido con el mismo código de factura en ItemFactura
-LEFT JOIN DB_SQUAD.Cliente c ON p.pedido_cliente = c.Cliente_ID
-LEFT JOIN DB_SQUAD.BI_Cliente bc ON c.Cliente_ID = bc.cliente_id_transaccional
-LEFT JOIN DB_SQUAD.Localidad l ON c.Cliente_Localidad = l.localidad_codigo
-LEFT JOIN DB_SQUAD.Provincia prov ON c.Cliente_Provincia = prov.provincia_codigo
-LEFT JOIN DB_SQUAD.BI_Ubicacion bu ON l.localidad_nombre = bu.localidad_nombre AND prov.provincia_nombre = bu.provincia_nombre
 WHERE e.envio_codigo IS NOT NULL
 GROUP BY
-    t.tiempo_id,
-    bc.cliente_bi_id,
-    bu.ubicacion_id;
+    t.tiempo_id;
 PRINT 'Datos migrados a DB_SQUAD.BI_FactEnvios.';
 GO
-
 
 -- FIN DE MIGRACIÓN DE DATOS A LAS NUEVAS TABLAS DE HECHOS
 
 
-
-PRINT 'Comenzando la creación de vistas para consultas de negocio.';
+PRINT 'creación de vistas para consultas de negocio';
 
 GO
 
--- Vistas para Consultas de Negocio (Actualizadas para usar las nuevas tablas de hechos)
-
--- 1. Ganancias: Total de ingresos (facturación) total de egresos (compras), por cada mes, por cada sucursal.
-CREATE VIEW DB_SQUAD.BI_GananciasPorMesSucursal AS
+-- Vistas para Consultas de Negocio
+CREATE VIEW DB_SQUAD.BI_GananciasPorMes AS
 SELECT
     t.anio,
     t.mes,
-    bs.sucursal_numero_maestra AS NumeroSucursal,
-    bs.sucursal_mail AS SucursalMail,
-    bs.sucursal_direccion_nombre AS SucursalDireccion,
     ISNULL(SUM(fv.TotalIngresos), 0) AS TotalIngresos,
     ISNULL(SUM(fc.TotalEgresos), 0) AS TotalEgresos,
     ISNULL(SUM(fv.TotalIngresos), 0) - ISNULL(SUM(fc.TotalEgresos), 0) AS GananciaNeta
 FROM DB_SQUAD.BI_Tiempo t
 LEFT JOIN DB_SQUAD.BI_FactVentas fv ON t.tiempo_id = fv.tiempo_id
 LEFT JOIN DB_SQUAD.BI_FactCompras fc ON t.tiempo_id = fc.tiempo_id
-LEFT JOIN DB_SQUAD.BI_Sucursal bs ON fv.sucursal_id = bs.sucursal_bi_id -- Asume que la sucursal se infiere de las ventas
 GROUP BY
     t.anio,
-    t.mes,
-    bs.sucursal_numero_maestra,
-    bs.sucursal_mail,
-    bs.sucursal_direccion_nombre;
+    t.mes;
 GO
-PRINT 'Vista DB_SQUAD.BI_GananciasPorMesSucursal creada.';
+PRINT 'Vista DB_SQUAD.BI_GananciasPorMes creada .';
 GO
 
--- 2. Factura promedio mensual. Valor promedio de las facturas (en $) según la provincia de la sucursal para cada cuatrimestre de cada año.
-CREATE VIEW DB_SQUAD.BI_FacturaPromedioMensualPorProvinciaCuatrimestre AS
+-- 2. Factura promedio mensual. 
+CREATE VIEW DB_SQUAD.BI_FacturaPromedioCuatrimestre AS
 SELECT
     t.anio,
     t.cuatrimestre,
-    usuc.provincia_nombre AS ProvinciaSucursal,
     SUM(fv.TotalIngresos) AS SumaImporteFacturas,
     SUM(fv.CantidadFacturas) AS TotalFacturas,
     CASE
@@ -535,17 +488,14 @@ SELECT
     END AS FacturaPromedio
 FROM DB_SQUAD.BI_FactVentas fv
 JOIN DB_SQUAD.BI_Tiempo t ON fv.tiempo_id = t.tiempo_id
-LEFT JOIN DB_SQUAD.BI_Sucursal bs ON fv.sucursal_id = bs.sucursal_bi_id
-LEFT JOIN DB_SQUAD.BI_Ubicacion usuc ON bs.sucursal_provincia_nombre = usuc.provincia_nombre AND bs.sucursal_localidad_nombre = usuc.localidad_nombre
 GROUP BY
     t.anio,
-    t.cuatrimestre,
-    usuc.provincia_nombre;
+    t.cuatrimestre;
 GO
-PRINT 'Vista DB_SQUAD.BI_FacturaPromedioMensualPorProvinciaCuatrimestre creada.';
+PRINT 'Vista DB_SQUAD.BI_FacturaPromedioCuatrimestre creada (adaptada).';
 GO
 
--- 3. Rendimiento de modelos. Los 3 modelos con mayores ventas para cada cuatrimestre de cada año según la localidad de la sucursal y rango etario de los clientes.
+-- 3. Rendimiento de modelos
 CREATE VIEW DB_SQUAD.BI_RendimientoModelosTop3 AS
 WITH ModeloVentas AS (
     SELECT
@@ -583,7 +533,7 @@ GO
 PRINT 'Vista DB_SQUAD.BI_RendimientoModelosTop3 creada.';
 GO
 
--- 4. Volumen de pedidos. Cantidad de pedidos registrados por turno, por sucursal según el mes de cada año.
+-- 4. Volumen de pedidos
 CREATE VIEW DB_SQUAD.BI_VolumenPedidosPorTurnoSucursalMes AS
 SELECT
     t.anio,
@@ -604,6 +554,7 @@ GO
 PRINT 'Vista DB_SQUAD.BI_VolumenPedidosPorTurnoSucursalMes creada.';
 GO
 
+-- 5. Conversión de pedidos
 CREATE VIEW DB_SQUAD.BI_ConversionPedidosPorEstadoCuatrimestreSucursal AS
 SELECT
     t.anio,
@@ -624,12 +575,10 @@ GO
 PRINT 'Vista DB_SQUAD.BI_ConversionPedidosPorEstadoCuatrimestreSucursal creada.';
 GO
 
-
-CREATE VIEW DB_SQUAD.BI_TiempoPromedioFabricacionPorCuatrimestre AS
+CREATE VIEW DB_SQUAD.BI_TiempoPromedioEntregaPorCuatrimestre AS
 SELECT
     t.anio,
     t.cuatrimestre,
-    -- bs.sucursal_numero_maestra AS NumeroSucursal, -- No hay un enlace directo de FactEnvios a Sucursal
     AVG(fe.TiempoPromedioEntregaDias) AS TiempoPromedioDias
 FROM DB_SQUAD.BI_FactEnvios fe
 JOIN DB_SQUAD.BI_Tiempo t ON fe.tiempo_id = t.tiempo_id
@@ -637,10 +586,10 @@ GROUP BY
     t.anio,
     t.cuatrimestre;
 GO
-PRINT 'Vista DB_SQUAD.BI_TiempoPromedioFabricacionPorCuatrimestre creada.';
+PRINT 'Vista DB_SQUAD.BI_TiempoPromedioEntregaPorCuatrimestre creada (adaptada).';
 GO
 
--- 7. Promedio de Compras: importe promedio de compras por mes.
+-- 7. Promedio de Compras
 CREATE VIEW DB_SQUAD.BI_PromedioComprasPorMes AS
 SELECT
     t.anio,
@@ -655,9 +604,8 @@ GO
 PRINT 'Vista DB_SQUAD.BI_PromedioComprasPorMes creada.';
 GO
 
--- 8. Compras por Tipo de Material. Importe total gastado por tipo de material, sucursal y cuatrimestre.
--- NOTA: La tabla BI_FactCompras no tiene FK a sucursal. Se agrupará por proveedor.
-CREATE VIEW DB_SQUAD.BI_ComprasPorTipoMaterialSucursalCuatrimestre AS
+-- 8. Compras por Tipo de Material
+CREATE VIEW DB_SQUAD.BI_ComprasPorTipoMaterialProveedorCuatrimestre AS
 SELECT
     t.anio,
     t.cuatrimestre,
@@ -674,7 +622,7 @@ GROUP BY
     bp.proveedor_razon_social,
     btm.tipo_material_descripcion;
 GO
-PRINT 'Vista DB_SQUAD.BI_ComprasPorTipoMaterialSucursalCuatrimestre creada.';
+PRINT 'Vista DB_SQUAD.BI_ComprasPorTipoMaterialProveedorCuatrimestre creada (adaptada).';
 GO
 
 -- 9. Porcentaje de cumplimiento de envíos en los tiempos programados por mes.
@@ -692,31 +640,8 @@ GO
 PRINT 'Vista DB_SQUAD.BI_PorcentajeCumplimientoEnvios creada.';
 GO
 
--- 10. Localidades que pagan mayor costo de envío. Las 3 localidades (tomando la localidad del cliente) con mayor promedio de costo de envío (total).
-CREATE VIEW DB_SQUAD.BI_LocalidadesMayorCostoEnvio AS
-WITH LocalidadCostoEnvio AS (
-    SELECT
-        bu.provincia_nombre AS ProvinciaCliente,
-        bu.localidad_nombre AS LocalidadCliente,
-        AVG(fe.TotalCostoEnvio) AS PromedioCostoEnvio,
-        ROW_NUMBER() OVER (ORDER BY AVG(fe.TotalCostoEnvio) DESC) as rn
-    FROM DB_SQUAD.BI_FactEnvios fe
-    LEFT JOIN DB_SQUAD.BI_Ubicacion bu ON fe.ubicacion_cliente_id = bu.ubicacion_id
-    GROUP BY
-        bu.provincia_nombre,
-        bu.localidad_nombre
-)
-SELECT
-    ProvinciaCliente,
-    LocalidadCliente,
-    PromedioCostoEnvio
-FROM LocalidadCostoEnvio
-WHERE rn <= 3;
+-- 10. Localidades que pagan mayor costo de envío.
+PRINT 'La vista DB_SQUAD.BI_LocalidadesMayorCostoEnvio no se recreará debido a la eliminación de las dimensiones de cliente y ubicación de BI_FactEnvios para mantener los principios de BI.';
 GO
-PRINT 'Vista DB_SQUAD.BI_LocalidadesMayorCostoEnvio creada.';
-GO
-
-
 PRINT 'Proceso de creación y migración del modelo BI completado.';
-
 GO
