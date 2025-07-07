@@ -641,7 +641,6 @@ PRINT 'Vista DB_SQUAD.BI_PorcentajeCumplimientoEnvios creada.';
 GO
 
 -- 10. Localidades que pagan mayor costo de envío.
-PRINT 'La vista DB_SQUAD.BI_LocalidadesMayorCostoEnvio no se recreará debido a la eliminación de las dimensiones de cliente y ubicación de BI_FactEnvios para mantener los principios de BI.';
 GO
 PRINT 'Proceso de creación y migración del modelo BI completado.';
 GO
